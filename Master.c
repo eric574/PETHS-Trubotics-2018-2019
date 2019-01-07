@@ -361,19 +361,25 @@ task usercontrol () {
           int res = vexRT[Btn8L];
           motor[Shooter] = res * 127 * -con;
           wait1Msec(1500);
+          motor[Shooter] = 50 * -con;
+          wait1Msec(500);
           motor[Shooter] = 0;
+          // motor[Shooter] = 0;
       }
-      // For locking shooter in place
+      // For locking shooter in place - used for ball intake
       if (vexRT[Btn8R]) {
-          HoldShoot(1200);
+          HoldShoot(1000);
       }
       /* Manual buttons for shooting */
       // Make shooter go up
       if (vexRT[Btn8U]) {
           motor[Shooter] = -127 * -con;
       }
+      else {
+          motor[Shooter] = 0;
+      }
       // Make shooter go down
-      else if (vexRt[Btn8D]) {
+      if (vexRt[Btn8D]) {
           motor[Shooter] = 127 * -con;   
       }
       else {
@@ -394,7 +400,7 @@ task usercontrol () {
           stop_intake = 1;
       }
       else {
-          motor[Intake1] = motor[Intake2] = 0;
+          StopBallIntake();
       }
   }
 }
