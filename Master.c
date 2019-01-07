@@ -54,6 +54,26 @@ void pre_auton () {
 
 // Global helper functions
 
+// For stopping the drive
+void StopDrive () {
+  motor[DriveLeft1] = motor[DriveRight1] = motor[DriveRight2] = motor[DriveLeft2] = 0;
+}
+
+// For stopping the claw flipper
+void StopClaw () {
+  motor[Claw] = 0;
+}
+
+// For stopping the shooter
+void StopShoot () {
+  motor[Shooter] = 0;
+}
+
+// For stopping the ball intake
+void StopBallIntake () {
+  motor[Intake1] = motor[Intake2] = 0;
+}
+
 // Drive forward
 void DriveF (int amount, int time) {
   int tmp = amount;
@@ -103,12 +123,36 @@ void ClawDown (int amount, int time) {
   if (time != 0) wait1Msec(time);
 }
 
+// For taking ball in - need to lower the catapult to load the balls in
+void BallIntake1 (int amount, int time) {
+  motor[Intake1] = -amount * con;
+  motor[Intake2] = -amount * -con;
+  // HoldShoot(3000);
+  if (time != 0) wait1Msec(time);
+}
+
+// For taking ball out - need to lower the catapult to load the balls in
+void BallIntake2 (int amount, int time) {
+  motor[Intake1] = amount * con;
+  motor[Intake2] = amount * -con;
+  // HoldShoot(3000);
+  if (time != 0) wait1Msec(time);
+}
+
 // Should hold the catapult in place
 void HoldShoot (int time) {
+	BallIntake1(127, 0);
   motor[Shooter] = 127;
-  // wait1Msec(1000);
+  wait1Msec(1100);
+  motor[Shooter] = 30;
   if (time != 0) wait1Msec(time);
-  motor[Shooter] = 50;
+  
+  
+  /*
+  motor[Shooter] = 127;
+  wait1Msec(700);
+  motor[Shooter] = 0;
+  */
 }
 
 // For shooting the ball up - automate it for now
@@ -125,42 +169,6 @@ void ShootDown (int amount) {
   wait1Msec(1500);
   motor[Shooter] = 0;
   // if (time != 0) wait1Msec(time);
-}
-
-// For taking ball in - need to lower the catapult to load the balls in
-void BallIntake1 (int amount, int time) {
-  motor[Intake1] = amount * con;
-  motor[Intake2] = amount * -con;
-  // HoldShoot(3000);
-  if (time != 0) wait1Msec(time);
-}
-
-// For taking ball out - need to lower the catapult to load the balls in
-void BallIntake2 (int amount, int time) {
-  motor[Intake1] = -amount * con;
-  motor[Intake2] = -amount * -con;
-  // HoldShoot(3000);
-  if (time != 0) wait1Msec(time);
-}
-
-// For stopping the drive
-void StopDrive () {
-  motor[DriveLeft1] = motor[DriveRight1] = motor[DriveRight2] = motor[DriveLeft2] = 0;
-}
-
-// For stopping the claw flipper
-void StopClaw () {
-  motor[Claw] = 0;
-}
-
-// For stopping the shooter
-void StopShoot () {
-  motor[Shooter] = 0;
-}
-
-// For stopping the ball intake
-void StopBallIntake () {
-  motor[Intake1] = motor[Intake2] = 0;
 }
 
 
@@ -361,14 +369,14 @@ task usercontrol () {
           int res = vexRT[Btn8L];
           motor[Shooter] = res * 127 * -con;
           wait1Msec(1500);
-          motor[Shooter] = 50 * -con;
-          wait1Msec(500);
+          motor[Shooter] = 127 * -con;
+          wait1Msec(700);
           motor[Shooter] = 0;
           // motor[Shooter] = 0;
       }
       // For locking shooter in place - used for ball intake
       if (vexRT[Btn8R]) {
-          HoldShoot(1000);
+          HoldShoot(3000);
       }
       /* Manual buttons for shooting */
       // Make shooter go up
