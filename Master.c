@@ -141,13 +141,11 @@ void BallIntake2 (int amount, int time) {
 
 // Should hold the catapult in place
 void HoldShoot (int time) {
-	BallIntake1(127, 0);
+  BallIntake1(127, 0);
   motor[Shooter] = 127;
   wait1Msec(1100);
-  motor[Shooter] = 30;
+  motor[Shooter] = 50;
   if (time != 0) wait1Msec(time);
-  
-  
   /*
   motor[Shooter] = 127;
   wait1Msec(700);
@@ -368,9 +366,9 @@ task usercontrol () {
       if (vexRT[Btn8L]) {
           int res = vexRT[Btn8L];
           motor[Shooter] = res * 127 * -con;
-          wait1Msec(1500);
+          wait1Msec(1600);
           motor[Shooter] = 127 * -con;
-          wait1Msec(700);
+          wait1Msec(800);
           motor[Shooter] = 0;
           // motor[Shooter] = 0;
       }
@@ -391,7 +389,7 @@ task usercontrol () {
           motor[Shooter] = 127 * -con;   
       }
       else {
-          motor[Shooter] = 0;   
+          motor[Shooter] = 0;
       }
       // Ball intake (CW) working
       if (vexRT[Btn6D]) {
