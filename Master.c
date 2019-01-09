@@ -1,3 +1,4 @@
+#pragma config(Sensor, in1,    Poten,          sensorPotentiometer)
 #pragma config(Motor,  port2,           DriveLeft1,    tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           DriveLeft2,    tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port4,           DriveRight1,   tmotorVex393_MC29, openLoop)
@@ -141,11 +142,13 @@ void BallIntake2 (int amount, int time) {
 
 // Should hold the catapult in place
 void HoldShoot (int time) {
-  BallIntake1(127, 0);
+	BallIntake1(127, 0);
   motor[Shooter] = 127;
   wait1Msec(1100);
-  motor[Shooter] = 50;
+  motor[Shooter] = 30;
   if (time != 0) wait1Msec(time);
+  
+  
   /*
   motor[Shooter] = 127;
   wait1Msec(700);
@@ -321,9 +324,27 @@ task autonomous () {
 /*                                                                        */
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
+
+int potValue = SensorValue(Poten);
+int desired = 666; // UPDATE VALUE
+task catapult()
+{
+      while(potValue < desired) //UPDATE SIGN ( < || > )
+      {
+      	motor[Shooter] = 127;
+      	potValue = SensorValue(Poten);
+    	}	
+    	motor[Shooter] = 0;
+}
+
 task usercontrol () {
   // User control code here, inside the loop
   while (1) {
+  	
+  		//startTask(catapult);
+  
+  
+  
        // FORWARD AND BACKWARD
       int tmp;
       if (vexRT[Ch2] > 0) {
@@ -366,9 +387,9 @@ task usercontrol () {
       if (vexRT[Btn8L]) {
           int res = vexRT[Btn8L];
           motor[Shooter] = res * 127 * -con;
-          wait1Msec(1600);
+          wait1Msec(1500);
           motor[Shooter] = 127 * -con;
-          wait1Msec(800);
+          wait1Msec(700);
           motor[Shooter] = 0;
           // motor[Shooter] = 0;
       }
@@ -389,7 +410,7 @@ task usercontrol () {
           motor[Shooter] = 127 * -con;   
       }
       else {
-          motor[Shooter] = 0;
+          motor[Shooter] = 0;   
       }
       // Ball intake (CW) working
       if (vexRT[Btn6D]) {
