@@ -209,16 +209,18 @@ task lock_catapult () {
           cnt--;
       }
       */
-}
-
-// Lift catapult
-task lift_catapult () {
+      // Change 3 seconds as necessary
+      wait1Msec(3000);
       // Now go up slowly
       while (potValue > initial) {
           motor[Shooter] = 10;
           potValue = SensorValue(Poten);
       }
       motor[Shooter] = 0;
+}
+
+// Lift catapult
+task lift_catapult () {
 }
 
 // Shoot from initial position
@@ -418,6 +420,7 @@ task autonomous () {
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 
+// Finished...
 task usercontrol () {
   // User control code here, inside the loop
   while (1) {
@@ -463,7 +466,7 @@ task usercontrol () {
       if (vexRT[Btn8L]) {
           // Testing task catapult()!!!
           startTask(catapult);
-
+          StopTask(catapult);
           /*
             int res = vexRT[Btn8L];
             motor[Shooter] = res * 127 * -con;
@@ -478,19 +481,19 @@ task usercontrol () {
       if (vexRT[Btn8R]) {
           // Testing task lock_catapult()!!!
           startTask(lock_catapult);
-
+          StopTask(lock_catapult);
           // startTask(HoldShoot)
       }
       /* Manual buttons for shooting */
       // Make shooter go up
-      if (vexRT[Btn8U]) {
+      if (vexRT[Btn8D]) {
           motor[Shooter] = -127 * -con;
       }
       else {
           motor[Shooter] = 0;
       }
       // Make shooter go down
-      if (vexRt[Btn8D]) {
+      if (vexRt[Btn8U]) {
           motor[Shooter] = 127 * -con;   
       }
       else {
