@@ -30,7 +30,7 @@ const int dev = -10; // Global deviation
 int con = -1; // Conventional direction
 int prevv; // Previous position of robot used for ultrasonic sensing
 int initial = 249; // Initial resting position of shooter arm
-int potValue = SensorValue(Poten); // top initial = 249
+int potValue = initial; // SensorValue(Poten); // top initial = 249
 int desired = 2400; // Desired position for locking arm
 bool stop_intake; // For stopping ball-intake
 bool flags; // For when we're on the flags side during autonomous
@@ -199,10 +199,15 @@ task lock_catapult () {
       // Now lock in place
       motor[Shooter] = 30;
       // Testing alternative to wait()
-      int cnt = 3000; // 3 seconds (change if necessary)
+      /*
+      int cnt = 100000; // 3 seconds (change if necessary)
       while (cnt > 0) {
           cnt--;
       }
+      */
+}
+
+task lift_catapult () {
       // Now go up slowly
       while (potValue > initial) {
           motor[Shooter] = 5;
