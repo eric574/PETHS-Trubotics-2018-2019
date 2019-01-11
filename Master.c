@@ -178,16 +178,20 @@ void ShootDown (int amount) {
 
 // Should hold the catapult in place
 task HoldShoot () {
-  // BallIntake1(127, 0);
-  motor[Shooter] = 127;
-  wait1Msec(1100);
-  motor[Shooter] = 30;
-  if (hold_time != 0) wait1Msec(hold_time);
-  /*
-  motor[Shooter] = 127;
-  wait1Msec(700);
-  motor[Shooter] = 0;
-  */
+    // BallIntake1(127, 0);
+    motor[Shooter] = 127;
+    wait1Msec(1100);
+    motor[Shooter] = 30;
+    if (hold_time != 0) wait1Msec(hold_time);
+    /*
+    motor[Shooter] = 127;
+    wait1Msec(700);
+    motor[Shooter] = 0;
+    */
+}
+
+task stop_catapult () {
+    motor[Shooter] = 0;
 }
 
 task lock_catapult () {
@@ -207,15 +211,17 @@ task lock_catapult () {
       */
 }
 
+// Lift catapult
 task lift_catapult () {
       // Now go up slowly
       while (potValue > initial) {
-          motor[Shooter] = 5;
+          motor[Shooter] = 10;
           potValue = SensorValue(Poten);
       }
       motor[Shooter] = 0;
 }
 
+// Shoot from initial position
 task catapult () {
       // Go down
       while (potValue < desired) {
@@ -224,11 +230,14 @@ task catapult () {
       }
       // Now stop motor to make arm fling straight up to shoot balls
       motor[Shooter] = 0;
+      wait1Msec(1100); // Wait 1.1 seconds
       // Testing alternative to wait()
+      /*
       int cnt = 1100; // Wait so that catapult has time to fling balls (go all the way up)
       while (cnt > 0) {
           cnt--;
       }
+      */
       // Make sure to rewind gears before proceeding
       while (potValue > initial) {
           motor[Shooter] = 5;
