@@ -29,6 +29,9 @@ const int hold_time = 3000; // Amount of time for locking shooter in place
 const int dev = -10; // Global deviation
 int con = -1; // Conventional direction
 int prevv; // Previous position of robot used for ultrasonic sensing
+int initial = 249; // Initial resting position of shooter arm
+int potValue = SensorValue(Poten); // top initial = 249
+int desired = 2400; // Desired position for locking arm
 bool stop_intake; // For stopping ball-intake
 bool flags; // For when we're on the flags side during autonomous
 bool red; // For when we're on the red side during autonomous
@@ -400,10 +403,6 @@ task autonomous () {
 /*                                                                        */
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
-
-int initial = 249;
-int potValue = SensorValue(Poten); // top initial = 249
-int desired = 2400;
 
 task usercontrol () {
   // User control code here, inside the loop
