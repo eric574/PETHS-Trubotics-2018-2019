@@ -24,6 +24,7 @@
 #define max(a, b) (a) < (b) ? (b) : (a)
 
 // Global variables
+const int hold_time = 3000; // Amount of time for locking shooter in place
 const int dev = -10; // Global deviation
 int con = -1; // Conventional direction
 bool stop_intake; // For stopping ball-intake
@@ -128,7 +129,6 @@ void ClawDown (int amount, int time) {
 void BallIntake1 (int amount, int time) {
   motor[Intake1] = -amount * con;
   motor[Intake2] = -amount * -con;
-  // HoldShoot(3000);
   if (time != 0) wait1Msec(time);
 }
 
@@ -136,22 +136,7 @@ void BallIntake1 (int amount, int time) {
 void BallIntake2 (int amount, int time) {
   motor[Intake1] = amount * con;
   motor[Intake2] = amount * -con;
-  // HoldShoot(3000);
   if (time != 0) wait1Msec(time);
-}
-
-// Should hold the catapult in place
-void HoldShoot (int time) {
-  BallIntake1(127, 0);
-  motor[Shooter] = 127;
-  wait1Msec(1100);
-  motor[Shooter] = 30;
-  if (time != 0) wait1Msec(time);
-  /*
-  motor[Shooter] = 127;
-  wait1Msec(700);
-  motor[Shooter] = 0;
-  */
 }
 
 // For shooting the ball up - automate it for now
@@ -182,6 +167,8 @@ void ShootDown (int amount) {
 /*---------------------------------------------------------------------------*/
 
 // Autonomous Functions
+
+// -------------------CHANGE TO MAKE USE OF NEWLY-ADDED SENSORS-----------------
 
 // For when we are on the side with no flags during autonomous
 void autoNoFlags (bool red) {
@@ -326,6 +313,23 @@ int initial = 249;
 int potValue = SensorValue(Poten); // top initial = 249
 int desired = 2400;
 
+
+// -------------------START OF HELPER TASKS-----------------
+
+// Should hold the catapult in place
+task HoldShoot () {
+  // BallIntake1(127, 0);
+  motor[Shooter] = 127;
+  wait1Msec(1100);
+  motor[Shooter] = 30;
+  if (hold_time != 0) wait1Msec(hold_time);
+  /*
+  motor[Shooter] = 127;
+  wait1Msec(700);
+  motor[Shooter] = 0;
+  */
+}
+
 task lock_catapult () {
       // Go down until we've reached the locking sweet spot
       while (potValue < desired) {
@@ -366,7 +370,6 @@ task catapult () {
           potValue = SensorValue(Poten);
       }
       motor[Shooter] = 0;
-
 }
 
 task usercontrol () {
@@ -430,7 +433,7 @@ task usercontrol () {
           // Testing task lock_catapult()!!!
           startTask(lock_catapult);
 
-          // HoldShoot(3000);
+          // startTask(HoldShoot)
       }
       /* Manual buttons for shooting */
       // Make shooter go up
@@ -451,14 +454,12 @@ task usercontrol () {
       if (vexRT[Btn6D]) {
           motor[Intake1] = vexRT[Btn6D] * -127 * con;
           motor[Intake2] = vexRT[Btn6D] * -127 * -con;
-          // HoldShoot(3000);
           stop_intake = 1;
       }
       // Ball intake (CCW) working
       else if (vexRT[Btn5D]) {
           motor[Intake1] = vexRT[Btn5D] * 127 * con;
           motor[Intake2] = vexRT[Btn5D] * 127 * -con;
-          // HoldShoot(3000);
           stop_intake = 1;
       }
       else {
