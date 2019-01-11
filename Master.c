@@ -1,4 +1,5 @@
 #pragma config(Sensor, in2,    Poten,          sensorPotentiometer)
+#pragma config(Sensor, dgtl8,  disIn,          sensorSONAR_cm)
 #pragma config(Motor,  port1,           DriveLeft1,    tmotorVex393_HBridge, openLoop, reversed)
 #pragma config(Motor,  port3,           DriveLeft2,    tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port4,           DriveRight1,   tmotorVex393_MC29, openLoop)
@@ -154,6 +155,8 @@ void ShootDown (int amount) {
   motor[Shooter] = 0;
   // if (time != 0) wait1Msec(time);
 }
+
+
 
 
 /*---------------------------------------------------------------------------*/
@@ -314,6 +317,7 @@ int potValue = SensorValue(Poten); // top initial = 249
 int desired = 2400;
 
 
+
 // -------------------START OF HELPER TASKS-----------------
 
 // Should hold the catapult in place
@@ -370,6 +374,19 @@ task catapult () {
           potValue = SensorValue(Poten);
       }
       motor[Shooter] = 0;
+}
+void moveForwarduntilDistance(int desired )  //Move robot forward untill the desired distance in (CM) is reached 
+{
+	  /* INPUT
+	wire in digital port 8, and the OUTPUT wire
+	in digital port 9
+	*/
+	while(SensorValue(disIn) < desired)
+	{
+		DriveF(127,10)//drive forward for 10ms	
+	}
+	StopDrive();
+
 }
 
 task usercontrol () {
