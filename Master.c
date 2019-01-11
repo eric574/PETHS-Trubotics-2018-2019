@@ -1,6 +1,6 @@
 #pragma config(Sensor, in2,    Poten,          sensorPotentiometer)
 #pragma config(Sensor, dgtl8,  disIn,          sensorSONAR_cm)
-#pragma config(Motor,  port1,           DriveLeft1,    tmotorVex393_HBridge, openLoop, reversed)
+#pragma config(Motor,  port2,           DriveLeft1,    tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           DriveLeft2,    tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port4,           DriveRight1,   tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port5,           DriveRight2,   tmotorVex393_MC29, openLoop)
@@ -26,7 +26,7 @@
 
 // Global variables
 const int hold_time = 3000; // Amount of time for locking shooter in place
-const int dev = -10; // Global deviation
+const int dev = -20; // Global deviation
 int con = -1; // Conventional direction
 int prevv; // Previous position of robot used for ultrasonic sensing
 int initial = 249; // Initial resting position of shooter arm
@@ -249,7 +249,7 @@ task catapult () {
 }
 
 // Helper functions for driving during autonomous
-task moveF (int desired, int threshold) {
+void moveF (int desired, int threshold) {
   /* INPUT
     wire in digital port 8, and the OUTPUT wire in digital port 9
   */
@@ -260,21 +260,21 @@ task moveF (int desired, int threshold) {
   StopDrive();
 }
 
-task moveB (int desired, int threshold) {
+void moveB (int desired, int threshold) {
     while (abs(prevv - desired) < threshold) {
         DriveB(127, 0);
     }
     StopDrive();
 }
 
-task turnR (int desired, int threshold) {
+void turnR (int desired, int threshold) {
     while (abs(prevv - desired) < threshold) {
         TurnR(127, 0);
     }
     StopDrive();
 }
 
-task turnL (int desired, int threshold) {
+void turnL (int desired, int threshold) {
     while (abs(prevv - desired) < threshold) {
         TurnL(127, 0);
     }
