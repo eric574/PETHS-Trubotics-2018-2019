@@ -28,6 +28,7 @@
 const int hold_time = 3000; // Amount of time for locking shooter in place
 const int dev = -10; // Global deviation
 int con = -1; // Conventional direction
+int prevv; // Previous position of robot used for ultrasonic sensing
 bool stop_intake; // For stopping ball-intake
 bool flags; // For when we're on the flags side during autonomous
 bool red; // For when we're on the red side during autonomous
@@ -156,9 +157,6 @@ void ShootDown (int amount) {
   // if (time != 0) wait1Msec(time);
 }
 
-
-
-
 /*---------------------------------------------------------------------------*/
 /*                                                                        */
 /*                            Autonomous Task                           */
@@ -172,6 +170,97 @@ void ShootDown (int amount) {
 // Autonomous Functions
 
 // -------------------CHANGE TO MAKE USE OF NEWLY-ADDED SENSORS-----------------
+
+// -------------------START OF HELPER TASKS-----------------
+
+// Should hold the catapult in place
+task HoldShoot () {
+  // BallIntake1(127, 0);
+  motor[Shooter] = 127;
+  wait1Msec(1100);
+  motor[Shooter] = 30;
+  if (hold_time != 0) wait1Msec(hold_time);
+  /*
+  motor[Shooter] = 127;
+  wait1Msec(700);
+  motor[Shooter] = 0;
+  */
+}
+
+task lock_catapult () {
+      // Go down until we've reached the locking sweet spot
+      while (potValue < desired) {
+          motor[Shooter] = 127;
+          potValue = SensorValue(Poten);
+      }
+      // Now lock in place
+      motor[Shooter] = 30;
+      // Testing alternative to wait()
+      int cnt = 3000; // 3 seconds (change if necessary)
+      while (cnt > 0) {
+          cnt--;
+      }
+      // Now go up slowly
+      while (potValue > initial) {
+          motor[Shooter] = 5;
+          potValue = SensorValue(Poten);
+      }
+      motor[Shooter] = 0;
+}
+
+task catapult () {
+      // Go down
+      while (potValue < desired) {
+          motor[Shooter] = 127;
+          potValue = SensorValue(Poten);
+      }
+      // Now stop motor to make arm fling straight up to shoot balls
+      motor[Shooter] = 0;
+      // Testing alternative to wait()
+      int cnt = 1100; // Wait so that catapult has time to fling balls (go all the way up)
+      while (cnt > 0) {
+          cnt--;
+      }
+      // Make sure to rewind gears before proceeding
+      while (potValue > initial) {
+          motor[Shooter] = 5;
+          potValue = SensorValue(Poten);
+      }
+      motor[Shooter] = 0;
+}
+
+// Helper functions for driving during autonomous
+task moveF (int desired, int threshold) {
+  /* INPUT
+    wire in digital port 8, and the OUTPUT wire in digital port 9
+  */
+  while (abs(prevv - desired) < threshold) {
+      DriveF(127, 0) // Drive forward for 10ms  
+      prevv = SensorValue(disIn);
+  }
+  StopDrive();
+}
+
+task moveB (int desired, int threshold) {
+    while (abs(prevv - desired) < threshold) {
+        DriveB(127, 0);
+    }
+    StopDrive();
+}
+
+task turnR (int desired, int threshold) {
+    while (abs(prevv - desired) < threshold) {
+        TurnR(127, 0);
+    }
+    StopDrive();
+}
+
+task turnL (int desired, int threshold) {
+    while (abs(prevv - desired) < threshold) {
+        TurnL(127, 0);
+    }
+    StopDrive();
+}
 
 // For when we are on the side with no flags during autonomous
 void autoNoFlags (bool red) {
@@ -315,79 +404,6 @@ task autonomous () {
 int initial = 249;
 int potValue = SensorValue(Poten); // top initial = 249
 int desired = 2400;
-
-
-
-// -------------------START OF HELPER TASKS-----------------
-
-// Should hold the catapult in place
-task HoldShoot () {
-  // BallIntake1(127, 0);
-  motor[Shooter] = 127;
-  wait1Msec(1100);
-  motor[Shooter] = 30;
-  if (hold_time != 0) wait1Msec(hold_time);
-  /*
-  motor[Shooter] = 127;
-  wait1Msec(700);
-  motor[Shooter] = 0;
-  */
-}
-
-task lock_catapult () {
-      // Go down until we've reached the locking sweet spot
-      while (potValue < desired) {
-          motor[Shooter] = 127;
-          potValue = SensorValue(Poten);
-      }
-      // Now lock in place
-      motor[Shooter] = 30;
-      // Testing alternative to wait()
-      int cnt = 3000; // 3 seconds (change if necessary)
-      while (cnt > 0) {
-          cnt--;
-      }
-      // Now go up slowly
-      while (potValue > initial) {
-          motor[Shooter] = 5;
-          potValue = SensorValue(Poten);
-      }
-      motor[Shooter] = 0;
-}
-
-task catapult () {
-      // Go down
-      while (potValue < desired) {
-          motor[Shooter] = 127;
-          potValue = SensorValue(Poten);
-      }
-      // Now stop motor to make arm fling straight up to shoot balls
-      motor[Shooter] = 0;
-      // Testing alternative to wait()
-      int cnt = 1100; // Wait so that catapult has time to fling balls (go all the way up)
-      while (cnt > 0) {
-          cnt--;
-      }
-      // Make sure to rewind gears before proceeding
-      while (potValue > initial) {
-          motor[Shooter] = 5;
-          potValue = SensorValue(Poten);
-      }
-      motor[Shooter] = 0;
-}
-void moveForwarduntilDistance(int desired )  //Move robot forward untill the desired distance in (CM) is reached 
-{
-	  /* INPUT
-	wire in digital port 8, and the OUTPUT wire
-	in digital port 9
-	*/
-	while(SensorValue(disIn) < desired)
-	{
-		DriveF(127,10)//drive forward for 10ms	
-	}
-	StopDrive();
-
-}
 
 task usercontrol () {
   // User control code here, inside the loop
