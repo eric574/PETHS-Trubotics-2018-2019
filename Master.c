@@ -1,5 +1,4 @@
-#pragma config(Sensor, in2,    Poten,          sensorPotentiometer)
-#pragma config(Sensor, dgtl8,  disIn,          sensorSONAR_cm)
+#pragma config(Sensor, in1,    Poten,          sensorPotentiometer)
 #pragma config(Motor,  port2,           DriveLeft1,    tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           DriveLeft2,    tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port4,           DriveRight1,   tmotorVex393_MC29, openLoop)
@@ -25,13 +24,8 @@
 #define max(a, b) (a) < (b) ? (b) : (a)
 
 // Global variables
-const int hold_time = 3000; // Amount of time for locking shooter in place
-const int dev = -20; // Global deviation
+const int dev = -10; // Global deviation
 int con = -1; // Conventional direction
-int prevv; // Previous position of robot used for ultrasonic sensing
-int initial = 249; // Initial resting position of shooter arm
-int potValue = initial; // SensorValue(Poten); // top initial = 249
-int desired = 2400; // Desired position for locking arm
 bool stop_intake; // For stopping ball-intake
 bool flags; // For when we're on the flags side during autonomous
 bool red; // For when we're on the red side during autonomous
@@ -134,6 +128,7 @@ void ClawDown (int amount, int time) {
 void BallIntake1 (int amount, int time) {
   motor[Intake1] = -amount * con;
   motor[Intake2] = -amount * -con;
+  // HoldShoot(3000);
   if (time != 0) wait1Msec(time);
 }
 
@@ -141,7 +136,37 @@ void BallIntake1 (int amount, int time) {
 void BallIntake2 (int amount, int time) {
   motor[Intake1] = amount * con;
   motor[Intake2] = amount * -con;
+  // HoldShoot(3000);
   if (time != 0) wait1Msec(time);
+}
+
+// Should hold the catapult in place
+task HoldShoot () {
+  // BallIntake1(127, 0);
+  motor[Shooter] = 127;
+  /*
+  long long int waitt = 12 * 100000000;
+  while (waitt) {
+    waitt--;
+  }
+  */
+  wait1Msec(1200);
+  motor[Shooter] = 30;
+  wait1Msec(2500);
+  // if (time != 0) wait1Msec(time);
+
+
+ // waitt = 2 * 10000000000000000000000000000;
+  //while (waitt) {
+   // waitt--;
+//  }
+
+
+  /*
+  motor[Shooter] = 127;
+  wait1Msec(700);
+  motor[Shooter] = 0;
+  */
 }
 
 // For shooting the ball up - automate it for now
@@ -160,6 +185,7 @@ void ShootDown (int amount) {
   // if (time != 0) wait1Msec(time);
 }
 
+
 /*---------------------------------------------------------------------------*/
 /*                                                                        */
 /*                            Autonomous Task                           */
@@ -171,115 +197,6 @@ void ShootDown (int amount) {
 /*---------------------------------------------------------------------------*/
 
 // Autonomous Functions
-
-// -------------------CHANGE TO MAKE USE OF NEWLY-ADDED SENSORS-----------------
-
-// -------------------START OF HELPER TASKS-----------------
-
-// Should hold the catapult in place
-task HoldShoot () {
-    // BallIntake1(127, 0);
-    motor[Shooter] = 127;
-    wait1Msec(1100);
-    motor[Shooter] = 30;
-    if (hold_time != 0) wait1Msec(hold_time);
-    /*
-    motor[Shooter] = 127;
-    wait1Msec(700);
-    motor[Shooter] = 0;
-    */
-}
-
-task stop_catapult () {
-    motor[Shooter] = 0;
-}
-
-task lock_catapult () {
-      // Go down until we've reached the locking sweet spot
-      while (potValue < desired) {
-          motor[Shooter] = 127;
-          potValue = SensorValue(Poten);
-      }
-      // Now lock in place
-      motor[Shooter] = 30;
-      // Testing alternative to wait()
-      /*
-      int cnt = 100000; // 3 seconds (change if necessary)
-      while (cnt > 0) {
-          cnt--;
-      }
-      */
-      // Change 3 seconds as necessary
-      wait1Msec(3000);
-      // Now go up slowly
-      while (potValue > initial) {
-          motor[Shooter] = 10;
-          potValue = SensorValue(Poten);
-      }
-      motor[Shooter] = 0;
-}
-
-// Lift catapult
-task lift_catapult () {
-}
-
-// Shoot from initial position
-task catapult () {
-      // Go down
-      while (potValue < desired) {
-          motor[Shooter] = 127;
-          potValue = SensorValue(Poten);
-      }
-      // Now stop motor to make arm fling straight up to shoot balls
-      motor[Shooter] = 0;
-      wait1Msec(1100); // Wait 1.1 seconds
-      // Testing alternative to wait()
-      /*
-      int cnt = 1100; // Wait so that catapult has time to fling balls (go all the way up)
-      while (cnt > 0) {
-          cnt--;
-      }
-      */
-      // Make sure to rewind gears before proceeding
-      while (potValue > initial) {
-          motor[Shooter] = 5;
-          potValue = SensorValue(Poten);
-      }
-      motor[Shooter] = 0;
-}
-
-// Helper functions for driving during autonomous
-void moveF (int desired, int threshold) {
-  /* INPUT
-    wire in digital port 8, and the OUTPUT wire in digital port 9
-  */
-  while (abs(prevv - desired) < threshold) {
-      DriveF(127, 0) // Drive forward for 10ms  
-      prevv = SensorValue(disIn);
-  }
-  StopDrive();
-}
-
-void moveB (int desired, int threshold) {
-    while (abs(prevv - desired) < threshold) {
-        DriveB(127, 0);
-    }
-    StopDrive();
-}
-
-void turnR (int desired, int threshold) {
-    while (abs(prevv - desired) < threshold) {
-        TurnR(127, 0);
-    }
-    StopDrive();
-}
-
-void turnL (int desired, int threshold) {
-    while (abs(prevv - desired) < threshold) {
-        TurnL(127, 0);
-    }
-    StopDrive();
-}
 
 // For when we are on the side with no flags during autonomous
 void autoNoFlags (bool red) {
@@ -397,16 +314,17 @@ void autoWithFlags (bool red) {
   }
 }
 
+
 task autonomous () {
   // ..........................................................................
   // Insert user code here.
   // ..........................................................................
   // Still needs TESTING
   if (flags) {
-      autoWithFlags(red);
+    autoWithFlags(red);
   }
   else {
-      autoNoFlags(red);
+    autoNoFlags(red);
   }
 }
 
@@ -420,99 +338,122 @@ task autonomous () {
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 
-// Finished...
+int potValue = SensorValue(Poten); //top initial = 249
+int desired = 2400; // UPDATE VALUE
+
+task catapult()
+{
+  /*hile(potValue < desired) //UPDATE SIGN ( < || > )
+      {
+        motor[Shooter] = 127;
+        potValue = SensorValue(Poten);
+      }
+      motor[Shooter] = 0;
+   */
+  /*
+    potValue = SensorValue(Poten);
+    if( potValue < desired)
+  {
+    motor[Shooter] = 127;
+    potValue = SensorValue(Poten);
+  }else{
+  motor[Shooter] = 30;
+}
+  */
+
+stopMotor(Shooter);
+}
+
 task usercontrol () {
   // User control code here, inside the loop
   while (1) {
-      // FORWARD AND BACKWARD
-      int tmp;
-      if (vexRT[Ch2] > 0) {
-          tmp = min(vexRT[Ch2], 100);
-      }
-      else if (vexRT[Ch2] < 0) {
-          tmp = max(vexRT[Ch2], -100);
-      }
-      motor[DriveLeft1] = tmp * -con;
-      motor[DriveRight1] = tmp * -con - dev;
-      motor[DriveRight2] = tmp * -con - dev;
-      motor[DriveLeft2] = tmp * -con;
-      // Left axle turn
-      if (vexRT[Btn5U]) {
-          motor[DriveLeft1] = vexRT[Btn5U] * 127 * con;
-          motor[DriveRight1] = vexRT[Btn5U] * -127 * con;
-          motor[DriveRight2] = vexRT[Btn5U] * -127 * con;
-          motor[DriveLeft2] = vexRT[Btn5U] * 127 * con;
-      }
-      // Right axle turn
-      if (vexRT[Btn6U]) {
-          motor[DriveLeft1] = vexRT[Btn6U] * 127 * -con;
-          motor[DriveRight1] = vexRT[Btn6U] * -127 * -con;
-          motor[DriveRight2] = vexRT[Btn6U] * -127 * -con;
-          motor[DriveLeft2] = vexRT[Btn6U] * 127 * -con;
-      }
-      // Claw angle rotation (to go down) working
-      if (vexRT[Btn7L]) {
-          motor[Claw] = vexRT[Btn7L] * 127 * con;
-      }
-      // Claw angle rotation (to go up) not working - need to replace motor most likely
-      else if (vexRT[Btn7U]) {
-          motor[Claw] = vexRT[Btn7U] * 127 * -con;
-      }
-      else {
-          motor[Claw] = 0;
-      }
-       /* Need to make sure catapult arm stays in place for ball intake - Use a potentiometer!!! */
-      // Shooter working CCW (make sure it goes back down again after shooting up)
-      if (vexRT[Btn8L]) {
-          // Testing task catapult()!!!
-          startTask(catapult);
-          StopTask(catapult);
-          /*
-            int res = vexRT[Btn8L];
-            motor[Shooter] = res * 127 * -con;
-            wait1Msec(1500);
-            motor[Shooter] = 127 * -con;
-            wait1Msec(700);
-            motor[Shooter] = 0;
-            // motor[Shooter] = 0;
-          */
-      }
-      // For locking shooter in place - used for ball intake
-      if (vexRT[Btn8R]) {
-          // Testing task lock_catapult()!!!
-          startTask(lock_catapult);
-          StopTask(lock_catapult);
-          // startTask(HoldShoot)
-      }
-      /* Manual buttons for shooting */
-      // Make shooter go up
-      if (vexRT[Btn8D]) {
-          motor[Shooter] = -127 * -con;
-      }
-      else {
-          motor[Shooter] = 0;
-      }
-      // Make shooter go down
-      if (vexRt[Btn8U]) {
-          motor[Shooter] = 127 * -con;   
-      }
-      else {
-          motor[Shooter] = 0;   
-      }
-      // Ball intake (CW) working
-      if (vexRT[Btn6D]) {
-          motor[Intake1] = vexRT[Btn6D] * -127 * con;
-          motor[Intake2] = vexRT[Btn6D] * -127 * -con;
-          stop_intake = 1;
-      }
-      // Ball intake (CCW) working
-      else if (vexRT[Btn5D]) {
-          motor[Intake1] = vexRT[Btn5D] * 127 * con;
-          motor[Intake2] = vexRT[Btn5D] * 127 * -con;
-          stop_intake = 1;
-      }
-      else {
-          StopBallIntake();
-      }
+
+startTask(catapult);
+    // FORWARD AND BACKWARD
+    int tmp;
+    if (vexRT[Ch2] > 0) {
+      tmp = min(vexRT[Ch2], 127);
+    }
+    else if (vexRT[Ch2] < 0) {
+      tmp = max(vexRT[Ch2], -127);
+    }
+    motor[DriveLeft1] = tmp * -con;
+    motor[DriveRight1] = tmp * -con - dev;
+    motor[DriveRight2] = tmp * -con - dev;
+    motor[DriveLeft2] = tmp * -con;
+    // Left axle turn
+    if (vexRT[Btn5U]) {
+      motor[DriveLeft1] = vexRT[Btn5U] * 127 * con;
+      motor[DriveRight1] = vexRT[Btn5U] * -127 * con;
+      motor[DriveRight2] = vexRT[Btn5U] * -127 * con;
+      motor[DriveLeft2] = vexRT[Btn5U] * 127 * con;
+    }
+    // Right axle turn
+    if (vexRT[Btn6U]) {
+      motor[DriveLeft1] = vexRT[Btn6U] * 127 * -con;
+      motor[DriveRight1] = vexRT[Btn6U] * -127 * -con;
+      motor[DriveRight2] = vexRT[Btn6U] * -127 * -con;
+      motor[DriveLeft2] = vexRT[Btn6U] * 127 * -con;
+    }
+    // Claw angle rotation (to go down) working
+    if (vexRT[Btn7L]) {
+      motor[Claw] = vexRT[Btn7L] * 127 * con;
+    }
+    // Claw angle rotation (to go up) not working - need to replace motor most likely
+    else if (vexRT[Btn7U]) {
+      motor[Claw] = vexRT[Btn7U] * 127 * -con;
+    }
+    else {
+      motor[Claw] = 0;
+    }
+    /* Need to make sure catapult arm stays in place for ball intake - Use a potentiometer!!! */
+    // Shooter working CCW (make sure it goes back down again after shooting up)
+    if (vexRT[Btn8L]) {
+      int res = vexRT[Btn8L];
+      motor[Shooter] = res * 127 * -con;
+      wait1Msec(1500);
+      motor[Shooter] = 127 * -con;
+      wait1Msec(700);
+      motor[Shooter] = 0;
+      // motor[Shooter] = 0;
+    }
+    // For locking shooter in place - used for ball intake
+    else if (vexRT[Btn8R]) {
+      // HoldShoot(3000);
+      StartTask (HoldShoot);
+
+      // StopTask(HoldShoot);
+  }
+
+    /* Manual buttons for shooting */
+    // Make shooter go up
+    else if (vexRT[Btn8U]) {
+      motor[Shooter] = -127 * -con;
+    }
+   
+    // Make shooter go down
+    else if (vexRt[Btn8D]) {
+      motor[Shooter] = 127 * -con;
+    }
+    else {
+      motor[Shooter] = 0;
+    }
+    // Ball intake (CW) working
+    if (vexRT[Btn6D]) {
+      motor[Intake1] = vexRT[Btn6D] * -127 * con;
+      motor[Intake2] = vexRT[Btn6D] * -127 * -con;
+      // HoldShoot(3000);
+      stop_intake = 1;
+    }
+    // Ball intake (CCW) working
+    else if (vexRT[Btn5D]) {
+      motor[Intake1] = vexRT[Btn5D] * 127 * con;
+      motor[Intake2] = vexRT[Btn5D] * 127 * -con;
+      // HoldShoot(3000);
+      stop_intake = 1;
+    }
+    else {
+      StopBallIntake();
+    }
   }
 }
