@@ -1,3 +1,9 @@
+/*
+NOTICE: Version without sensors
+Date: Jan 12th, 2018
+*/
+
+
 #pragma config(Sensor, in1,    Poten,          sensorPotentiometer)
 #pragma config(Motor,  port2,           DriveLeft1,    tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           DriveLeft2,    tmotorVex393_MC29, openLoop, reversed)
@@ -27,6 +33,7 @@
 const int dev = -10; // Global deviation
 int con = -1; // Conventional direction
 bool stop_intake; // For stopping ball-intake
+bool holding;
 bool flags; // For when we're on the flags side during autonomous
 bool red; // For when we're on the red side during autonomous
 
@@ -144,24 +151,9 @@ void BallIntake2 (int amount, int time) {
 task HoldShoot () {
   // BallIntake1(127, 0);
   motor[Shooter] = 127;
-  /*
-  long long int waitt = 12 * 100000000;
-  while (waitt) {
-    waitt--;
-  }
-  */
   wait1Msec(1200);
   motor[Shooter] = 30;
-  wait1Msec(2500);
-  // if (time != 0) wait1Msec(time);
-
-
- // waitt = 2 * 10000000000000000000000000000;
-  //while (waitt) {
-   // waitt--;
-//  }
-
-
+  wait1Msec(2500); // Wait to lock in place
   /*
   motor[Shooter] = 127;
   wait1Msec(700);
@@ -173,6 +165,8 @@ task HoldShoot () {
 void ShootUp (int amount) {
   motor[Shooter] = -amount * -con;
   wait1Msec(1500);
+  motor[Shooter] = -amount * -con;
+  wait1Msec(700);
   motor[Shooter] = 0;
   // if (time != 0) wait1Msec(time);
 }
@@ -181,10 +175,26 @@ void ShootUp (int amount) {
 void ShootDown (int amount) {
   motor[Shooter] = amount * -con;
   wait1Msec(1500);
+  motor[Shooter] = amount * -con;
+  wait1Msec(700);
   motor[Shooter] = 0;
   // if (time != 0) wait1Msec(time);
 }
 
+// Ball intake method as a task
+task auto_intake () {
+    motor[Intake1] = -127 * con;
+    motor[Intake2] = -127 * -con;
+}
+
+
+// Used along with ball intake to run simultaneously during autonomous
+task lock_catapult () {
+    motor[Shooter] = 127;
+    wait1Msec(1200);
+    motor[Shooter] = 30;
+    wait1Msec(2500); // Wait to lock in place
+}
 
 /*---------------------------------------------------------------------------*/
 /*                                                                        */
@@ -202,55 +212,69 @@ void ShootDown (int amount) {
 void autoNoFlags (bool red) {
   // Red side
   if (red) {
-    // Collect ball underneath the mobile goal first
-    BallIntake1(127, 0);
-    DriveB(127, 1500);
-    StopDrive();
-    StopBallIntake();
-    // Now flip the mobile goal over
-    TurnL(127, 500);
-    StopDrive();
-    DriveF(127, 1000);
-    StopDrive();
-    ClawUp(127, 500);
-    StopClaw();
-    ClawDown(127, 500);
-    StopClaw();
-    // Now park on the nearest platform
-    TurnL(127, 200);
-    StopDrive();
-    DriveB(127, 2000);
-    StopDrive();
-    TurnR(127, 400);
-    StopDrive();
-    DriveB(127, 150);
-    StopDrive();
+      // Flip opponent's cap over first
+      DriveB(127, 2500);
+      StopDrive();
+      TurnL(127, 1100);
+      StopDrive();
+      DriveF(127, 1500);
+      StopDrive();
+      TurnR(127, 1100);
+      StopDrive();
+      DriveB(127, 2200);
+      StopDrive();
+      ClawUp(127, 1100); // Make claw touch the floor
+      StopClaw();
+      DriveB(127, 200);
+      StopDrive();
+      ClawDown(127, 1100); // Make claw go up to flip cap
+      StopClaw();
+      TurnR(127, 1400);
+      StopDrive();
+
+      // Try running intake and locking at same time
+      startTask(auto_intake);
+      // BallIntake1(127, 0);
+      DriveF(127, 2000);
+      StopDrive();
+      startTask(lock_catapult);
+      // StopBallIntake();
+      wait1Msec(1000);
+      StopTask(auto_intake);
+      StopTask(lock_catapult);
   }
   // Blue side (left and right are flipped)
   else {
-    // Collect ball underneath the mobile goal first
-    BallIntake1(127, 0);
-    DriveB(127, 1500);
-    StopDrive();
-    StopBallIntake();
-    // Now flip the mobile goal over
-    TurnR(127, 500);
-    StopDrive();
-    DriveF(127, 1000);
-    StopDrive();
-    ClawUp(127, 500);
-    StopClaw();
-    ClawDown(127, 500);
-    StopClaw();
-    // Now park on the nearest platform
-    TurnR(127, 200);
-    StopDrive();
-    DriveB(127, 2000);
-    StopDrive();
-    TurnL(127, 400);
-    StopDrive();
-    DriveB(127, 150);
-    StopDrive();
+      // Flip opponent's cap over first
+      DriveB(127, 2500);
+      StopDrive();
+      TurnR(127, 1100);
+      StopDrive();
+      DriveF(127, 1500);
+      StopDrive();
+      TurnL(127, 1100);
+      StopDrive();
+      DriveB(127, 2200);
+      StopDrive();
+      ClawUp(127, 1100); // Make claw touch the floor
+      StopClaw();
+      DriveB(127, 200);
+      StopDrive();
+      ClawDown(127, 1100); // Make claw go up to flip cap
+      StopClaw();
+      TurnL(127, 1400);
+      StopDrive();
+
+      // Try running intake and locking at same time
+      startTask(auto_intake);
+      // BallIntake1(127, 0);
+      DriveF(127, 2000);
+      StopDrive();
+      startTask(lock_catapult);
+      // StopBallIntake();
+      wait1Msec(1000);
+      StopTask(auto_intake);
+      StopTask(lock_catapult);
   }
 }
 
@@ -258,59 +282,65 @@ void autoNoFlags (bool red) {
 void autoWithFlags (bool red) {
   // Red side
   if (red) {
-    // Collect the ball underneath the mobile goal first
-    BallIntake1(127, 0);
-    DriveB(127, 1500);
+    // Shoot the ball at second/third flag
+    TurnR(127, 1100);
     StopDrive();
-    StopBallIntake();
-    // Now shoot the 2 balls onto the top 2 flags
-    DriveF(127, 1500);
+    DriveF(127, 500);
     StopDrive();
-    TurnL(127, 500);
+    ShootDown(127)
+
+    // Now drive forward to hit lowest flag (with the back bar)
+    TurnR(127, 2400); // Turn around 180 degrees
     StopDrive();
-    DriveB(127, 500);
+    DriveB(127, 2000);
     StopDrive();
-    ShootDown(127);
-    // Now flip the mobile goal over
-    TurnL(127, 500);
+
+    // Now flip the cap over
+    DriveF(127, 500);
     StopDrive();
-    DriveB(127, 150);
+    TurnR(127, 1100); // Turn 90 degrees
     StopDrive();
-    ClawUp(127, 500);
+    DriveF(127, 500);
+    StopDrive();
+    // Get claw down
+    ClawUp(127, 1100);
     StopClaw();
-    ClawDown(127, 500);
-    StopClaw();
-    // Turn around after
-    TurnR(127, 1500);
+    DriveB(127, 600);
     StopDrive();
+    // Flip cap
+    ClawDown(127, 1100);
+    StopClaw();
   }
   // Blue side (left and right are flipped)
   else {
-    // Collect the ball underneath the mobile goal first
-    BallIntake1(127, 0);
-    DriveB(127, 1500);
+    // Shoot the ball at second/third flag
+    TurnL(127, 1100);
     StopDrive();
-    StopBallIntake();
-    // Now shoot the 2 balls onto the top 2 flags
-    DriveF(127, 1500);
+    DriveF(127, 500);
     StopDrive();
-    TurnR(127, 500);
+    ShootDown(127)
+
+    // Now drive forward to hit lowest flag (with the back bar)
+    TurnL(127, 2400);
     StopDrive();
-    DriveB(127, 500);
+    DriveB(127, 2000);
     StopDrive();
-    ShootDown(127);
-    // Now flip the mobile goal over
-    TurnR(127, 500);
+
+    // Now flip the cap over
+    DriveF(127, 500);
     StopDrive();
-    DriveB(127, 150);
+    TurnL(127, 1100); // Turn 90 degrees
     StopDrive();
-    ClawUp(127, 500);
+    DriveF(127, 500);
+    StopDrive();
+    // Get claw down
+    ClawUp(127, 1100);
     StopClaw();
-    ClawDown(127, 500);
-    StopClaw();
-    // Turn around after
-    TurnL(127, 1500);
+    DriveB(127, 600);
     StopDrive();
+    // Flip cap
+    ClawDown(127, 1100);
+    StopClaw();
   }
 }
 
@@ -341,34 +371,10 @@ task autonomous () {
 int potValue = SensorValue(Poten); //top initial = 249
 int desired = 2400; // UPDATE VALUE
 
-task catapult()
-{
-  /*hile(potValue < desired) //UPDATE SIGN ( < || > )
-      {
-        motor[Shooter] = 127;
-        potValue = SensorValue(Poten);
-      }
-      motor[Shooter] = 0;
-   */
-  /*
-    potValue = SensorValue(Poten);
-    if( potValue < desired)
-  {
-    motor[Shooter] = 127;
-    potValue = SensorValue(Poten);
-  }else{
-  motor[Shooter] = 30;
-}
-  */
-
-stopMotor(Shooter);
-}
-
 task usercontrol () {
   // User control code here, inside the loop
   while (1) {
 
-startTask(catapult);
     // FORWARD AND BACKWARD
     int tmp;
     if (vexRT[Ch2] > 0) {
@@ -396,17 +402,17 @@ startTask(catapult);
       motor[DriveLeft2] = vexRT[Btn6U] * 127 * -con;
     }
     // Claw angle rotation (to go down) working
-    if (vexRT[Btn7L]) {
-      motor[Claw] = vexRT[Btn7L] * 127 * con;
+    if (vexRT[Btn7U]) {
+      motor[Claw] = vexRT[Btn7U] * 127 * con;
     }
-    // Claw angle rotation (to go up) not working - need to replace motor most likely
-    else if (vexRT[Btn7U]) {
-      motor[Claw] = vexRT[Btn7U] * 127 * -con;
+    // Claw angle rotation (to go up) not working
+    else if (vexRT[Btn7L]) {
+      motor[Claw] = vexRT[Btn7L] * 127 * -con;
     }
     else {
       motor[Claw] = 0;
     }
-    /* Need to make sure catapult arm stays in place for ball intake - Use a potentiometer!!! */
+    // Need to make sure catapult arm stays in place for ball intake
     // Shooter working CCW (make sure it goes back down again after shooting up)
     if (vexRT[Btn8L]) {
       int res = vexRT[Btn8L];
@@ -417,14 +423,14 @@ startTask(catapult);
       motor[Shooter] = 0;
       // motor[Shooter] = 0;
     }
-    // For locking shooter in place - used for ball intake
+    // For locking shooter in place - used for ball intake (need to fix)
+    // (Locking and ball intake are to be separate!!!)
     else if (vexRT[Btn8R]) {
       // HoldShoot(3000);
-      StartTask (HoldShoot);
-
+      StartTask(HoldShoot);
+      holding = 1;
       // StopTask(HoldShoot);
   }
-
     /* Manual buttons for shooting */
     // Make shooter go up
     else if (vexRT[Btn8U]) {
@@ -436,7 +442,13 @@ startTask(catapult);
       motor[Shooter] = 127 * -con;
     }
     else {
-      motor[Shooter] = 0;
+      // Should hopefully make holdshoot function work
+      if (!holding) {
+        motor[Shooter] = 0;
+      }
+      else {
+        holding = 0;
+      }
     }
     // Ball intake (CW) working
     if (vexRT[Btn6D]) {
