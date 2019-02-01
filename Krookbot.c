@@ -116,7 +116,7 @@ void StopBallIntake () {
 }
 
 void StopBallIndexer () {
-	motor[Indexer] = 0;	
+	motor[Indexer] = 0;
 }
 
 // Drive forward
@@ -158,11 +158,11 @@ void TurnL (int amount, int time) {
 }
 
 void Turn90L () {
-	TurnL(100, 150);	
+	TurnL(100, 150);
 }
 
 void Turn90R () {
-	TurnR(100, 550);	
+	TurnR(100, 550);
 }
 
 // For taking ball in
@@ -206,6 +206,7 @@ void autoShoot () {
 	startTask(Shoot);
 	stopTask(Shoot);
 	StopShoot();
+	wait1Msec(500);//WAIT BEFORE DRIVING FOROWRD
 	DriveF(100, 500);
 	StopDrive();
 	startTask(Shoot);
@@ -268,15 +269,15 @@ void autoWithFlags (bool red) {
   		wait1Msec(1000);
   		stopTask(BallIntake1);
   		stopTask(Indexer1);
-  		
+
   		// Drive back and rotate 90 degrees CCW
   		DriveB(100, 500);
   		StopDrive();
   		Turn90L();
   		StopDrive();
-  		
+
   		/* Can alternatively use autoShoot() instead of code below */
-  		
+
   		// Shoot the ball onto the top flag
   		startTask(Shoot);
   		wait1Msec(500);
@@ -289,8 +290,8 @@ void autoWithFlags (bool red) {
   		wait1Msec(500);
   		// Turn off flywheel and drive straight to toggle low flag
   		StopShoot();
-  		
-  		
+
+
   		DriveF(100, 100);
   		StopDrive();
   		// Drive back and turn 90 degrees CW
@@ -330,15 +331,15 @@ void autoWithFlags (bool red) {
   		wait1Msec(1000);
   		stopTask(BallIntake1);
   		stopTask(Indexer1);
-  		
+
   		// Drive back and rotate 90 degrees CW
   		DriveB(100, 500);
   		StopDrive();
   		Turn90R();
   		StopDrive();
-  		
+
   		/* Can alternatively use autoShoot() instead of code below */
-  		
+
   		// Shoot the ball onto the top flag
   		startTask(Shoot);
   		wait1Msec(500);
@@ -351,8 +352,8 @@ void autoWithFlags (bool red) {
   		wait1Msec(500);
   		// Turn off flywheel and drive straight to toggle low flag
   		StopShoot();
-  		
-  		
+
+
   		DriveF(100, 100);
   		StopDrive();
   		// Drive back and turn 90 degrees CCW
@@ -389,26 +390,26 @@ void autoNoFlags (bool red) {
   		// Drive straight to align with the opponent's cap
   		DriveF(100, 100);
   		StopDrive();
-  		
+
   		// Turn 90 degrees CCW and drive forwards, while turning on ball intake, to flip over the cap
   		Turn90L();
   		StopDrive();
   		startTask(BallIntake2);
 			DriveF(100, 500);
-			stopTask(BallIntake2);  		
-  		
+			stopTask(BallIntake2);
+
   		// Now drive back and turn 90 degrees CCW
   		DriveB(100, 400);
   		StopDrive();
 			Turn90L();
 			StopDrive();
-			
+
   		// Drive forwards and turn 90 degrees CW to align with the platform
   		DriveF(100, 100);
   		StopDrive();
   		Turn90R();
   		StopDrive();
-			
+
   		// Now drive forwards to get onto the platform
     	DriveF(100, 1000);
     	StopDrive();
@@ -419,26 +420,26 @@ void autoNoFlags (bool red) {
 			// Drive straight to align with the opponent's cap
   		DriveF(100, 100);
   		StopDrive();
-  		
+
   		// Turn 90 degrees CW and drive forwards, while turning on ball intake, to flip over the cap
   		Turn90R();
   		StopDrive();
   		startTask(BallIntake2);
 			DriveF(100, 500);
-			stopTask(BallIntake2);  		
-  		
+			stopTask(BallIntake2);
+
   		// Now drive back and turn 90 degrees CW
   		DriveB(100, 400);
   		StopDrive();
 			Turn90R();
 			StopDrive();
-			
+
   		// Drive forwards and turn 90 degrees CCW to align with the platform
   		DriveF(100, 100);
   		StopDrive();
   		Turn90L();
   		StopDrive();
-			
+
   		// Now drive forwards to get onto the platform
     	DriveF(100, 1000);
     	StopDrive();
@@ -501,8 +502,8 @@ task usercontrol () {
      	tmp = max(vexRT[Ch2], -110);
     }
     motor[DriveLeft1] = tmp * con;
-    motor[DriveRight1] = 0.75*tmp * con;
-    motor[DriveRight2] = 0.75*tmp * con;
+    motor[DriveRight1] = 0.55*tmp * con;
+    motor[DriveRight2] = 0.55*tmp * con;
     motor[DriveLeft2] = tmp * con;
 
     // Left axle turn
@@ -519,9 +520,9 @@ task usercontrol () {
       motor[DriveRight2] = vexRT[Btn6U] * -90 * -con;
       motor[DriveLeft2] = vexRT[Btn6U] * 90 * -con;
     }
-    
-    
-    
+
+
+
     // Turn left sensitive
     if (vexRT[Btn7L]) {
 			motor[DriveLeft1] = 40 * con;
@@ -546,12 +547,12 @@ task usercontrol () {
       motor[Flywheel3] = res * -127 * -con;
     }
     else {
-    	StopShoot();	
+    	StopShoot();
   	}
-    
+
     // Turn off the flywheel
     if (vexRT[Btn8D]) {
-    	StopShoot();	
+    	StopShoot();
   	}
 
     // Ball intake (CW) working
@@ -567,26 +568,26 @@ task usercontrol () {
     else {
       StopBallIntake();
     }
-    
+
     // Implement indexer and (maybe) 3rd intake here...
 		if (vexRT[Btn7U]) {
-			motor[Indexer] = vexRT[Btn7U] * -100 * con; 	
+			motor[Indexer] = vexRT[Btn7U] * -100 * con;
 		}
 		else if (vexRT[Btn7D]) {
-			motor[Indexer] = vexRT[Btn7D] * 100 * con;	
+			motor[Indexer] = vexRT[Btn7D] * 100 * con;
 		}
 		else {
-			StopBallIndexer();	
+			StopBallIndexer();
 		}
-		
+
 		// For auto shoot (top 2 flags)
 		if (vexRT[Btn8L]) {
-			autoShoot();		
+			autoShoot();
 		}
-		
+
 		// For turning 90 degrees CW
 		if (vexRT[Btn8R]) {
-			Turn90R();	
+			Turn90R();
 		}
   }
 }
