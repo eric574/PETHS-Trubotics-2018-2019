@@ -3,6 +3,8 @@
 #pragma config(Motor,  port3,           DriveLeft2,    tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port4,           DriveRight1,   tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port5,           DriveRight2,   tmotorVex393_MC29, openLoop, reversed)
+
+
 #pragma config(Motor,  port6,           Intake,        tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port7,           Indexer,       tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port8,           Flywheel1,     tmotorVex393_MC29, openLoop)
@@ -38,10 +40,12 @@
 
 const int dev = -10; // Global deviation
 int con = -1; // Conventional direction
+bool mat; // Are we on competition mats?
+int friction = 15; // Have to account for different surface from competition mats
 bool stop_intake; // For stopping ball-intake
 bool holding;
-bool flags; // For when we're on the flags side during autonomous
-bool red; // For when we're on the red side during autonomous
+bool flags = 1; // For when we're on the flags side during autonomous
+bool red = 1; // For when we're on the red side during autonomous
 
 
 /*---------------------------------------------------------------------------*/
@@ -122,25 +126,30 @@ void StopBallIndexer () {
 // Drive forward
 void DriveF (int amount, int time) {
   int tmp = amount;
-  motor[DriveLeft1] = tmp * -con;
-  motor[DriveRight1] = tmp * -con - dev;
-  motor[DriveRight2] = tmp * -con - dev;
-  motor[DriveLeft2] = tmp * -con;
+  double backDev = 1;
+  if (mat) time += friction;
+  motor[DriveLeft1] = tmp * -con * backDev;
+  motor[DriveRight1] = 0.72 * tmp * -con * backDev;
+  motor[DriveRight2] = 0.72 * tmp * -con * backDev;
+  motor[DriveLeft2] = tmp * -con * backDev;
   if (time != 0) wait1Msec(time);
 }
 
 // Drive backwards
 void DriveB (int amount, int time) {
   int tmp = -amount;
-  motor[DriveLeft1] = tmp * -con;
-  motor[DriveRight1] = tmp * -con - dev;
-  motor[DriveRight2] = tmp * -con - dev;
-  motor[DriveLeft2] = tmp * -con;
+ 	double backDev = 0.978;
+ 	if (mat) time += friction;
+  motor[DriveLeft1] = tmp * -con * backDev;
+  motor[DriveRight1] = 0.72 * tmp * -con * backDev;
+  motor[DriveRight2] = 0.72 * tmp * -con * backDev;
+  motor[DriveLeft2] = tmp * -con * backDev;
   if (time != 0) wait1Msec(time);
 }
 
 // Turn right
 void TurnR (int amount, int time) {
+	if (mat) time += friction;
   motor[DriveLeft1] = amount * -con;
   motor[DriveRight1] = -amount * -con;
   motor[DriveRight2] = -amount * -con;
@@ -150,6 +159,7 @@ void TurnR (int amount, int time) {
 
 // Turn left
 void TurnL (int amount, int time) {
+	if (mat) time += friction;
   motor[DriveLeft1] = amount * con;
   motor[DriveRight1] = -amount * con;
   motor[DriveRight2] = -amount * con;
@@ -158,11 +168,13 @@ void TurnL (int amount, int time) {
 }
 
 void Turn90L () {
-	TurnL(100, 150);
+	// 344 = competition mat
+	TurnL(90, 314);
 }
 
 void Turn90R () {
-	TurnR(100, 550);
+	// 344 = competition mat
+	TurnR(90, 314);
 }
 
 // For taking ball in
@@ -191,27 +203,50 @@ task Loader1 () {
 	motor[Intake] = motor[Indexer] = 100 * -con;
 }
 
-// For shooting the ball up - automate it for now
-task Shoot () {
-	// Change value of 100 if needed
-  motor[Flywheel1] = motor[Flywheel2] = 127 * -con;
-  motor[Flywheel3] = -127 * -con;
+task turnFlywheelOn () {
+	motor[Flywheel1] = motor[Flywheel2] = 127 * -con;
+	motor[Flywheel3] = -127 * -con;
+}
+
+// For securing center and low flag points
+// Starting position is facing flags
+// Shoot middle flag and push low flag
+void TwoFlags () {
+	startTask(turnFlywheelOn);
+	wait1Msec(5000);
+	DriveF(100, 600); // Now prepare to hit middle flag
+	StopDrive();
+	// 2nd ball is much lower (right under the indexer)
 	startTask(Indexer1);
-	wait1Msec(500);
+	wait1Msec(3000);
 	stopTask(Indexer1);
+	StopBallIndexer();
+	stopTask(turnFlywheelOn);
+	StopBallIndexer();
+	DriveF(100,1500) ; //Drive into low flag
 }
 
 // Auto shoots the balls onto the top 2 flags
 void autoShoot () {
-	startTask(Shoot);
-	stopTask(Shoot);
-	StopShoot();
-	wait1Msec(500);//WAIT BEFORE DRIVING FOROWRD
-	DriveF(100, 500);
+	startTask(turnFlywheelOn);
+	wait1Msec(3000); // MAY NEED TO CHANGE THE TIME VALUE
+	
+	// Shoot 1st ball
+	startTask(Indexer1);
+	wait1Msec(1500);
+	stopTask(Indexer1);
+	StopBallIndexer();
+	// wait1Msec(500); // WAIT BEFORE DRIVING FORWARD
+	// MAY NEED TO CHANGE THE TIME VALUE
+	DriveF(100, 500); // Now prepare to hit middle flag
 	StopDrive();
-	startTask(Shoot);
-	stopTask(Shoot);
-	StopShoot();
+	
+	// 2nd ball is much lower (right under the indexer)
+	startTask(Indexer1);
+	wait1Msec(2500); // MAY NEED TO CHANGE THE TIME VALUE
+	stopTask(Indexer1);
+	StopBallIndexer();
+	stopTask(turnFlywheelOn);
 }
 
 // Rotate the claw to flip the object
@@ -249,69 +284,64 @@ void DescorerDown (int amount, int time) {
 
 /*---------------------------------------------------------------------------*/
 
-
-
-// Autonomous Functions
-
-
-
 // For when we are on the side with no flags during autonomous
 
 void autoWithFlags (bool red) {
+
+	int a,b,c;//arguement variables for red and no red based on red
   // Red side
   if (red) {
-			// Drive up to get the ball underneath the cap
-			DriveF(100, 500);
-			StopDrive();
-  		// Load the ball into the intake
+  		// First start intake
   		startTask(BallIntake1);
-  		startTask(Indexer1);
-  		wait1Msec(1000);
-  		stopTask(BallIntake1);
-  		stopTask(Indexer1);
-
+			// Drive up to get the ball underneath the cap
+			a = 1000;
+  		DriveF(100, a);
+			StopDrive();
+			stopTask(BallIntake1);
+			b = 500;
+			wait1Msec(b);
   		// Drive back and rotate 90 degrees CCW
-  		DriveB(100, 500);
+			c = 700;
+  		DriveB(100, c);
   		StopDrive();
   		Turn90L();
   		StopDrive();
 
   		/* Can alternatively use autoShoot() instead of code below */
-
+			autoShoot();
   		// Shoot the ball onto the top flag
-  		startTask(Shoot);
-  		wait1Msec(500);
+
   		// Stop flywheel and drive up then stop drive
-  		StopShoot();
-  		DriveF(100, 50);
-  		StopDrive();
+
   		// Turn on flywheel to shoot middle flag
-  		startTask(Shoot);
-  		wait1Msec(500);
+
   		// Turn off flywheel and drive straight to toggle low flag
-  		StopShoot();
-
-
-  		DriveF(100, 100);
+  		DriveF(100, b);
   		StopDrive();
+
   		// Drive back and turn 90 degrees CW
-  		DriveB(100, 100);
+  		c=250;
+  		DriveB(100, c);
   		StopDrive();
   		Turn90R();
   		StopDrive();
+
   		// Flip over the cap/drive forwards simultaneously
   		startTask(BallIntake2);
-  		DriveF(100, 100);
+  		DriveF(100, 300);
   		StopDrive();
   		stopTask(BallIntake2);
+
   		// Drive back and turn 90 degrees CW
   		DriveB(100, 250);
   		StopDrive();
   		Turn90R();
   		StopDrive();
+
   		// Drive forwards to get onto the platform
   		DriveF(100, 200);
   		StopDrive();
+
   		// Turn 90 degrees CCW and drive onto the platform
 			Turn90L();
 			StopDrive();
@@ -320,67 +350,63 @@ void autoWithFlags (bool red) {
   }
 
   // Blue side (left and right are flipped)
-
   else {
-			// Drive up to get the ball underneath the cap
-			DriveF(100, 500);
-			StopDrive();
-  		// Load the ball into the intake
+			// First start intake
   		startTask(BallIntake1);
-  		startTask(Indexer1);
-  		wait1Msec(1000);
-  		stopTask(BallIntake1);
-  		stopTask(Indexer1);
+			// Drive up to get the ball underneath the cap
+			DriveF(100, a);
+			StopDrive();
+			stopTask(BallIntake1);
+			wait1Msec(b);
 
   		// Drive back and rotate 90 degrees CW
-  		DriveB(100, 500);
+  		DriveB(100, c);
   		StopDrive();
   		Turn90R();
   		StopDrive();
 
   		/* Can alternatively use autoShoot() instead of code below */
-
+			autoShoot();
   		// Shoot the ball onto the top flag
-  		startTask(Shoot);
-  		wait1Msec(500);
+
   		// Stop flywheel and drive up then stop drive
-  		StopShoot();
-  		DriveF(100, 50);
-  		StopDrive();
+
   		// Turn on flywheel to shoot middle flag
-  		startTask(Shoot);
-  		wait1Msec(500);
+
   		// Turn off flywheel and drive straight to toggle low flag
-  		StopShoot();
+  		DriveF(100, 700);
+  		StopDrive();
 
-
-  		DriveF(100, 100);
-  		StopDrive();
-  		// Drive back and turn 90 degrees CCW
-  		DriveB(100, 100);
-  		StopDrive();
-  		Turn90L();
-  		StopDrive();
-  		// Flip over the cap/drive forwards simultaneously
-  		startTask(BallIntake2);
-  		DriveF(100, 100);
-  		StopDrive();
-  		stopTask(BallIntake2);
   		// Drive back and turn 90 degrees CCW
   		DriveB(100, 250);
   		StopDrive();
   		Turn90L();
   		StopDrive();
+
+  		// Flip over the cap/drive forwards simultaneously
+  		startTask(BallIntake2);
+  		DriveF(100, 300);
+  		StopDrive();
+  		stopTask(BallIntake2);
+
+  		// Drive back and turn 90 degrees CCW
+  		DriveB(100, 250);
+  		StopDrive();
+  		Turn90L();
+  		StopDrive();
+
   		// Drive forwards to get onto the platform
   		DriveF(100, 200);
   		StopDrive();
+
   		// Turn 90 degrees CW and drive onto the platform
 			Turn90R();
 			StopDrive();
 			DriveF(100, 1000);
 			StopDrive();
-  }
+		}
 }
+
 
 // For when we are on the side with flags during autonomous
 void autoNoFlags (bool red) {
@@ -444,28 +470,114 @@ void autoNoFlags (bool red) {
     	DriveF(100, 1000);
     	StopDrive();
   }
-
 }
 
+// Used after all 3 flags are toggled - goes back and flips the opponent's cap
+void autoCapFlipper () {
+		if (red) {
+			// Drive back and turn 90 degrees CW
+  		DriveB(100, 500); // MAY NEED TO CHANGE THE TIME VALUE
+  		StopDrive();
+  		Turn90R();
+  		StopDrive();
+			
+  		// Flip over the cap/drive forwards simultaneously
+  		startTask(BallIntake2);
+  		DriveF(100, 1000); // MAY NEED TO CHANGE THE TIME VALUE
+  		StopDrive();
+  		stopTask(BallIntake2);
+		}
+		else {
+			// Drive back and turn 90 degrees CCW
+  		DriveB(100, 500); // MAY NEED TO CHANGE THE TIME VALUE
+  		StopDrive();
+  		Turn90L();
+  		StopDrive();
+
+  		// Flip over the cap/drive forwards simultaneously
+  		startTask(BallIntake2);
+  		DriveF(100, 1000); // MAY NEED TO CHANGE THE TIME VALUE
+  		StopDrive();
+  		stopTask(BallIntake2);
+		}
+}
+
+void ThreeFlags () {
+		if (red) {
+			// First start intake
+  		startTask(BallIntake1);
+			// Drive up to get the ball underneath the cap
+  		DriveF(100, 1500); // MAY NEED TO CHANGE THE TIME VALUE
+			StopDrive();
+			stopTask(BallIntake1);
+			// wait1Msec(500);
+			
+  		// Drive back and rotate 90 degrees CCW
+  		DriveB(100, 1000); // MAY NEED TO CHANGE THE TIME VALUE
+  		StopDrive();
+  		Turn90L();
+  		StopDrive();
+
+  		/* Can alternatively use autoShoot() instead of code below */
+			autoShoot();
+  		// Shoot the ball onto the top flag
+
+  		// Stop flywheel and drive up then stop drive
+
+  		// Turn on flywheel to shoot middle flag
+
+  		// Turn off flywheel and drive straight to toggle low flag
+  		DriveF(100, 1000); // MAY NEED TO CHANGE THE TIME VALUE
+  		StopDrive();
+  		
+  		// Now flip over opponent's cap
+  		autoCapFlipper();
+  	}
+  	else {
+			// First start intake
+  		startTask(BallIntake1);
+			// Drive up to get the ball underneath the cap
+  		DriveF(100, 1500); // MAY NEED TO CHANGE THE TIME VALUE
+			StopDrive();
+			stopTask(BallIntake1);
+			// wait1Msec(500);
+			
+  		// Drive back and rotate 90 degrees CW
+  		DriveB(100, 1000); // MAY NEED TO CHANGE THE TIME VALUE
+  		StopDrive();
+  		Turn90R();
+  		StopDrive();
+
+  		/* Can alternatively use autoShoot() instead of code below */
+			autoShoot();
+  		// Shoot the ball onto the top flag
+
+  		// Stop flywheel and drive up then stop drive
+
+  		// Turn on flywheel to shoot middle flag
+
+  		// Turn off flywheel and drive straight to toggle low flag
+  		DriveF(100, 1000); // MAY NEED TO CHANGE THE TIME VALUE
+  		StopDrive();
+  		
+  		// Now flip over opponent's cap
+  		autoCapFlipper();
+  	}
+}
 
 task autonomous () {
   // ..........................................................................
-
   // Insert user code here.
-
   // ..........................................................................
-
   // Still needs TESTING
-
   if (flags) {
-    autoWithFlags(red);
+  	// TwoFlags();
+  	ThreeFlags();
   }
   else {
     autoNoFlags(red);
   }
 }
-
-
 
 /*---------------------------------------------------------------------------*/
 
@@ -486,25 +598,26 @@ task autonomous () {
 /*---------------------------------------------------------------------------*/
 
 
+int prevvtmp;
 
 task usercontrol () {
-
   // User control code here, inside the loop
   while (1) {
     // FORWARD AND BACKWARD
     int tmp = 0;
-
+   	double backDev;
     if (vexRT[Ch2] > 20) {
       tmp = min(vexRT[Ch2], 110);
+      backDev = 1;
     }
-
     else if (vexRT[Ch2] < -20) {
      	tmp = max(vexRT[Ch2], -110);
+     	backDev = 0.978;
     }
-    motor[DriveLeft1] = tmp * con;
-    motor[DriveRight1] = 0.55*tmp * con;
-    motor[DriveRight2] = 0.55*tmp * con;
-    motor[DriveLeft2] = tmp * con;
+    motor[DriveLeft1] = tmp * con*backDev;
+    motor[DriveRight1] = 0.9*tmp * con*backDev;
+    motor[DriveRight2] = 0.9*tmp * con*backDev;
+    motor[DriveLeft2] = tmp * con*backDev;
 
     // Left axle turn
     if (vexRT[Btn5U]) {
@@ -521,24 +634,21 @@ task usercontrol () {
       motor[DriveLeft2] = vexRT[Btn6U] * 90 * -con;
     }
 
-
-
     // Turn left sensitive
     if (vexRT[Btn7L]) {
 			motor[DriveLeft1] = 40 * con;
-      motor[DriveRight1] = -40 * con;
-      motor[DriveRight2] = -40 * con;
+      motor[DriveRight1] = 0;
+      motor[DriveRight2] = 0;
       motor[DriveLeft2] = 40 * con;
     }
 
     // Turn right sensitive
     else if (vexRT[Btn7R]) {
-      motor[DriveLeft1] = 40 * -con;
+      motor[DriveLeft1] = 0;
       motor[DriveRight1] = -40 * -con;
       motor[DriveRight2] = -40 * -con;
-      motor[DriveLeft2] = 40 * -con;
+      motor[DriveLeft2] = 0;
     }
-
 
     // Turn on the flywheel
     if (vexRT[Btn8U]) {
@@ -589,5 +699,6 @@ task usercontrol () {
 		if (vexRT[Btn8R]) {
 			Turn90R();
 		}
+		prevvtmp = tmp;
   }
 }
