@@ -166,34 +166,32 @@ void TurnL (int amount, int time) {
 }
 
 void Turn90L () {
-  // 344 = competition mat
-  TurnL(90, 314);
+  TurnL(127, 630);
 }
 
 void Turn90R () {
-  // 344 = competition mat
-  TurnR(90, 314);
+  TurnR(90, 630);
 }
 
 // For taking ball in
 task BallIntake1 () {
-  motor[Intake] = -100 * con;
+  motor[Intake] = -127 * con;
 }
 
 
 // For taking ball out
 task BallIntake2 () {
-  motor[Intake] = 100 * con;
+  motor[Intake] = 127 * con;
 }
 
 // Turns both the indexer and loader one way
 task Indexer1 () {
-  motor[Indexer] = 100 * -con;
+  motor[Indexer] = 127 * -con;
 }
 
 // Turns both the indexer and loader the other way
 task Indexer2 () {
-  motor[Indexer] = -100 * -con;
+  motor[Indexer] = -127 * -con;
 }
 
 // Turns both the intake and indexer and loader
@@ -605,11 +603,11 @@ task usercontrol () {
     int tmp = 0;
     double backDev = 1;
     if (vexRT[Ch2] > 20) {
-      tmp = min(vexRT[Ch2], 110);
+      tmp = min(vexRT[Ch2], 127);
       // backDev = 1;
     }
     else if (vexRT[Ch2] < -20) {
-      tmp = max(vexRT[Ch2], -110);
+      tmp = max(vexRT[Ch2], -127);
       // backDev = 0.978;
     }
     motor[DriveLeft1] = tmp * con*backDev;
@@ -665,12 +663,12 @@ task usercontrol () {
 
     // Ball intake (CW) working
     if (vexRT[Btn6D]) {
-      motor[Intake] = vexRT[Btn6D] * -100 * con;
+      motor[Intake] = vexRT[Btn6D] * -127 * con;
     }
 
     // Ball intake (CCW) working
     else if (vexRT[Btn5D]) {
-      motor[Intake] = vexRT[Btn5D] * 100 * con;
+      motor[Intake] = vexRT[Btn5D] * 127 * con;
     }
 
     else {
