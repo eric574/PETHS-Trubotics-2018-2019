@@ -518,7 +518,7 @@ void ThreeFlags () {
       StopDrive();
       wait1Msec(200);
       // Turn90L();
-      TurnL(127, 305);
+      TurnL(127, 300);
       StopDrive();
       wait1Msec(200);
 			// wait1Msec(500);
@@ -546,7 +546,7 @@ void ThreeFlags () {
       StopDrive();
       wait1Msec(200);
       // Turn90R();
-      TurnR(127, 305);
+      TurnR(127, 300);
       StopDrive();
       wait1Msec(200);
 			// wait1Msec(500);
@@ -693,6 +693,8 @@ task usercontrol () {
     if (vexRT[Btn8L]) {
       autoShoot(1);
     }
+    
+    
 
     // For turning 90 degrees CW
     if (vexRT[Btn8R]) {
