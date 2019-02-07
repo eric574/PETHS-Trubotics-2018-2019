@@ -127,8 +127,8 @@ void DriveF (int amount, int time) {
   double backDev = 1;
   if (mat) time += friction;
   motor[DriveLeft1] = tmp * -con * backDev;
-  motor[DriveRight1] = 0.72 * tmp * -con * backDev;
-  motor[DriveRight2] = 0.72 * tmp * -con * backDev;
+  motor[DriveRight1] = tmp * -con * backDev;
+  motor[DriveRight2] = tmp * -con * backDev;
   motor[DriveLeft2] = tmp * -con * backDev;
   if (time != 0) wait1Msec(time);
 }
@@ -136,27 +136,17 @@ void DriveF (int amount, int time) {
 // Drive backwards
 void DriveB (int amount, int time) {
   int tmp = -amount;
-  double backDev = 0.978;
+  double backDev = 1;
   if (mat) time += friction;
   motor[DriveLeft1] = tmp * -con * backDev;
-  motor[DriveRight1] = 0.72 * tmp * -con * backDev;
-  motor[DriveRight2] = 0.72 * tmp * -con * backDev;
+  motor[DriveRight1] = tmp * -con * backDev;
+  motor[DriveRight2] = tmp * -con * backDev;
   motor[DriveLeft2] = tmp * -con * backDev;
   if (time != 0) wait1Msec(time);
 }
 
 // Turn right
 void TurnR (int amount, int time) {
-  if (mat) time += friction;
-  motor[DriveLeft1] = amount * -con;
-  motor[DriveRight1] = -amount * -con;
-  motor[DriveRight2] = -amount * -con;
-  motor[DriveLeft2] = amount * -con;
-  if (time != 0) wait1Msec(time);
-}
-
-// Turn left
-void TurnL (int amount, int time) {
   if (mat) time += friction;
   motor[DriveLeft1] = amount * con;
   motor[DriveRight1] = -amount * con;
@@ -165,12 +155,22 @@ void TurnL (int amount, int time) {
   if (time != 0) wait1Msec(time);
 }
 
+// Turn left
+void TurnL (int amount, int time) {
+  if (mat) time += friction;
+  motor[DriveLeft1] = amount * -con;
+  motor[DriveRight1] = -amount * -con;
+  motor[DriveRight2] = -amount * -con;
+  motor[DriveLeft2] = amount * -con;
+  if (time != 0) wait1Msec(time);
+}
+
 void Turn90L () {
-  TurnL(127, 630);
+  TurnL(127, 320);
 }
 
 void Turn90R () {
-  TurnR(90, 630);
+  TurnR(127, 320);
 }
 
 // For taking ball in
@@ -204,45 +204,35 @@ task turnFlywheelOn () {
   motor[Flywheel3] = -127 * -con;
 }
 
-// For securing center and low flag points
-// Starting position is facing flags
-// Shoot middle flag and push low flag
-void TwoFlags () {
-  startTask(turnFlywheelOn);
-  wait1Msec(5000);
-  DriveF(100, 600); // Now prepare to hit middle flag
-  StopDrive();
-  // 2nd ball is much lower (right under the indexer)
-  startTask(Indexer1);
-  wait1Msec(3000);
-  stopTask(Indexer1);
-  StopBallIndexer();
-  stopTask(turnFlywheelOn);
-  StopBallIndexer();
-  DriveF(100,1500) ; //Drive into low flag
-}
-
 // Auto shoots the balls onto the top 2 flags
-void autoShoot () {
-  startTask(turnFlywheelOn);
-  wait1Msec(3000); // MAY NEED TO CHANGE THE TIME VALUE
-  
+void autoShoot (bool turnon) {
+  if (turnon) {
+  	startTask(turnFlywheelOn);
+  	wait1Msec(3000); // MAY NEED TO CHANGE THE TIME VALUE
+  }
   // Shoot 1st ball
   startTask(Indexer1);
   wait1Msec(1500);
   stopTask(Indexer1);
   StopBallIndexer();
-  // wait1Msec(500); // WAIT BEFORE DRIVING FORWARD
   // MAY NEED TO CHANGE THE TIME VALUE
-  DriveF(100, 500); // Now prepare to hit middle flag
-  StopDrive();
-  
+  if (turnon) DriveF(100, 1500); // Now prepare to hit middle flag
+  else DriveF(100, 1500);
+	StopDrive();
   // 2nd ball is much lower (right under the indexer)
   startTask(Indexer1);
-  wait1Msec(2500); // MAY NEED TO CHANGE THE TIME VALUE
+  wait1Msec(3000); // MAY NEED TO CHANGE THE TIME VALUE
   stopTask(Indexer1);
   StopBallIndexer();
   stopTask(turnFlywheelOn);
+}
+
+// For securing center and low flag points
+// Starting position is facing flags
+// Shoot middle flag and push low flag
+void TwoFlags () {
+  autoShoot(1);
+  DriveF(100, 800) ; //Drive into low flag
 }
 
 // Rotate the claw to flip the object
@@ -304,7 +294,7 @@ void autoWithFlags (bool red) {
       StopDrive();
 
       /* Can alternatively use autoShoot() instead of code below */
-      autoShoot();
+      autoShoot(0);
       // Shoot the ball onto the top flag
 
       // Stop flywheel and drive up then stop drive
@@ -362,7 +352,7 @@ void autoWithFlags (bool red) {
       StopDrive();
 
       /* Can alternatively use autoShoot() instead of code below */
-      autoShoot();
+      autoShoot(0);
       // Shoot the ball onto the top flag
 
       // Stop flywheel and drive up then stop drive
@@ -472,88 +462,101 @@ void autoNoFlags (bool red) {
 void autoCapFlipper () {
     if (red) {
       // Drive back and turn 90 degrees CW
-      DriveB(100, 500); // MAY NEED TO CHANGE THE TIME VALUE
+      DriveB(100, 400); // MAY NEED TO CHANGE THE TIME VALUE
       StopDrive();
-      Turn90R();
+      wait1Msec(200);
+      // Turn90R();
+      TurnR(127, 330);
       StopDrive();
-      
+      wait1Msec(200);
       // Flip over the cap/drive forwards simultaneously
       startTask(BallIntake2);
-      DriveF(100, 1000); // MAY NEED TO CHANGE THE TIME VALUE
+      
+      DriveF(100, 1500); // MAY NEED TO CHANGE THE TIME VALUE
       StopDrive();
       stopTask(BallIntake2);
     }
     else {
       // Drive back and turn 90 degrees CCW
-      DriveB(100, 500); // MAY NEED TO CHANGE THE TIME VALUE
+      DriveB(100, 400); // MAY NEED TO CHANGE THE TIME VALUE
       StopDrive();
-      Turn90L();
+      wait1Msec(200);
+      // Turn90L();
+      TurnL(127, 330);
       StopDrive();
-
+      wait1Msec(200);
       // Flip over the cap/drive forwards simultaneously
       startTask(BallIntake2);
-      DriveF(100, 1000); // MAY NEED TO CHANGE THE TIME VALUE
+      
+      DriveF(100, 1500); // MAY NEED TO CHANGE THE TIME VALUE
       StopDrive();
       stopTask(BallIntake2);
     }
 }
 
+// Use this to get the 2nd ball from under the cap at the start
+void getSecondBall () {
+		startTask(BallIntake1);
+		// Drive up to get the ball underneath the cap first
+		DriveF(100, 1500); // MAY NEED TO CHANGE THE TIME VALUE
+    StopDrive();
+    stopTask(BallIntake1);
+}
+
 void ThreeFlags () {
     if (red) {
-      // First start intake
-      startTask(BallIntake1);
-      // Drive up to get the ball underneath the cap
-      DriveF(100, 1500); // MAY NEED TO CHANGE THE TIME VALUE
-      StopDrive();
-      stopTask(BallIntake1);
-      // wait1Msec(500);
-      
+    	// First turn on flywheel
+    	// startTask(turnFlywheelOn);	
+      // Next start intake
+    
+    
+    	getSecondBall();
+    	// startTask(turnFlywheelOn);
+    	wait1Msec(200);
       // Drive back and rotate 90 degrees CCW
-      DriveB(100, 1000); // MAY NEED TO CHANGE THE TIME VALUE
+      DriveB(100, 1500); // MAY NEED TO CHANGE THE TIME VALUE
       StopDrive();
-      Turn90L();
+      wait1Msec(200);
+      // Turn90L();
+      TurnL(127, 305);
       StopDrive();
-
+      wait1Msec(200);
+			// wait1Msec(500);
       /* Can alternatively use autoShoot() instead of code below */
-      autoShoot();
-      // Shoot the ball onto the top flag
-
-      // Stop flywheel and drive up then stop drive
-
-      // Turn on flywheel to shoot middle flag
-
+      autoShoot(1);
+      StopTask(turnFlywheelOn);
+			StopShoot();
+			wait1Msec(200);
       // Turn off flywheel and drive straight to toggle low flag
-      DriveF(100, 1000); // MAY NEED TO CHANGE THE TIME VALUE
+      DriveF(100, 100); // MAY NEED TO CHANGE THE TIME VALUE
       StopDrive();
       
       // Now flip over opponent's cap
       autoCapFlipper();
     }
     else {
-      // First start intake
-      startTask(BallIntake1);
-      // Drive up to get the ball underneath the cap
-      DriveF(100, 1500); // MAY NEED TO CHANGE THE TIME VALUE
-      StopDrive();
-      stopTask(BallIntake1);
-      // wait1Msec(500);
-      
+      // First turn on flywheel
+    	// startTask(turnFlywheelOn);	
+      // Next start intake
+    	getSecondBall();
+    	// startTask(turnFlywheelOn);
+    	wait1Msec(200);
       // Drive back and rotate 90 degrees CW
-      DriveB(100, 1000); // MAY NEED TO CHANGE THE TIME VALUE
+      DriveB(100, 1500); // MAY NEED TO CHANGE THE TIME VALUE
       StopDrive();
-      Turn90R();
+      wait1Msec(200);
+      // Turn90R();
+      TurnR(127, 305);
       StopDrive();
-
+      wait1Msec(200);
+			// wait1Msec(500);
       /* Can alternatively use autoShoot() instead of code below */
-      autoShoot();
-      // Shoot the ball onto the top flag
-
-      // Stop flywheel and drive up then stop drive
-
-      // Turn on flywheel to shoot middle flag
-
+      autoShoot(1);
+      StopTask(turnFlywheelOn);
+			StopShoot();
+			wait1Msec(200);
       // Turn off flywheel and drive straight to toggle low flag
-      DriveF(100, 1000); // MAY NEED TO CHANGE THE TIME VALUE
+      DriveF(100, 200); // MAY NEED TO CHANGE THE TIME VALUE
       StopDrive();
       
       // Now flip over opponent's cap
@@ -617,32 +620,32 @@ task usercontrol () {
 
     // Left axle turn
     if (vexRT[Btn5U]) {
-      motor[DriveLeft1] = vexRT[Btn5U] * 90 * con;
-      motor[DriveRight1] = vexRT[Btn5U] * -90 * con;
-      motor[DriveRight2] = vexRT[Btn5U] * -90 * con;
-      motor[DriveLeft2] = vexRT[Btn5U] * 90 * con;
+      motor[DriveLeft1] = vexRT[Btn5U] * 90 * -con;
+      motor[DriveRight1] = vexRT[Btn5U] * -90 * -con;
+      motor[DriveRight2] = vexRT[Btn5U] * -90 * -con;
+      motor[DriveLeft2] = vexRT[Btn5U] * 90 * -con;
     }
     // Right axle turn
     else if (vexRT[Btn6U]) {
-      motor[DriveLeft1] = vexRT[Btn6U] * 90 * -con;
-      motor[DriveRight1] = vexRT[Btn6U] * -90 * -con;
-      motor[DriveRight2] = vexRT[Btn6U] * -90 * -con;
-      motor[DriveLeft2] = vexRT[Btn6U] * 90 * -con;
+      motor[DriveLeft1] = vexRT[Btn6U] * 90 * con;
+      motor[DriveRight1] = vexRT[Btn6U] * -90 * con;
+      motor[DriveRight2] = vexRT[Btn6U] * -90 * con;
+      motor[DriveLeft2] = vexRT[Btn6U] * 90 * con;
     }
 
     // Turn left sensitive
-    if (vexRT[Btn7L]) {
-      motor[DriveLeft1] = 40 * con;
+    if (vexRT[Btn7R]) {
+      motor[DriveLeft1] = 50 * con;
       motor[DriveRight1] = 0;
       motor[DriveRight2] = 0;
-      motor[DriveLeft2] = 40 * con;
+      motor[DriveLeft2] = 50 * con;
     }
 
     // Turn right sensitive
-    else if (vexRT[Btn7R]) {
+    else if (vexRT[Btn7L]) {
       motor[DriveLeft1] = 0;
-      motor[DriveRight1] = -40 * -con;
-      motor[DriveRight2] = -40 * -con;
+      motor[DriveRight1] = -50 * -con;
+      motor[DriveRight2] = -50 * -con;
       motor[DriveLeft2] = 0;
     }
 
@@ -675,12 +678,12 @@ task usercontrol () {
       StopBallIntake();
     }
 
-    // Implement indexer and (maybe) 3rd intake here...
+    // Indexer working
     if (vexRT[Btn7U]) {
-      motor[Indexer] = vexRT[Btn7U] * -100 * con;
+      motor[Indexer] = vexRT[Btn7U] * -127 * con;
     }
     else if (vexRT[Btn7D]) {
-      motor[Indexer] = vexRT[Btn7D] * 100 * con;
+      motor[Indexer] = vexRT[Btn7D] * 127 * con;
     }
     else {
       StopBallIndexer();
@@ -688,12 +691,13 @@ task usercontrol () {
 
     // For auto shoot (top 2 flags)
     if (vexRT[Btn8L]) {
-      autoShoot();
+      autoShoot(1);
     }
 
     // For turning 90 degrees CW
     if (vexRT[Btn8R]) {
-      Turn90R();
+      // Turn90R();
+    	autoCapFlipper();
     }
     prevvtmp = tmp;
   }
