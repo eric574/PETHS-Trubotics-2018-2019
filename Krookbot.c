@@ -347,12 +347,12 @@ void autoCapFlipper () {
       // Turn90R();
       TurnR(127, 313);
       StopDrive();
-      
-      
+
+
       wait1Msec(200);
       // Flip over the cap/drive forwards simultaneously
       startTask(BallIntake2);
-      
+
       DriveF(100, 1500); // MAY NEED TO CHANGE THE TIME VALUE
       StopDrive();
       stopTask(BallIntake2);
@@ -369,7 +369,7 @@ void autoCapFlipper () {
       wait1Msec(200);
       // Flip over the cap/drive forwards simultaneously
       startTask(BallIntake2);
-      
+
       DriveF(100, 1500); // MAY NEED TO CHANGE THE TIME VALUE
       StopDrive();
       stopTask(BallIntake2);
@@ -389,7 +389,7 @@ void getSecondBall () {
 }
 
 void getOnPlatform () {
-		if (red) {	
+		if (red) {
 			DriveB(100, 1000);
 			StopDrive();
 			wait1Msec(200);
@@ -413,14 +413,14 @@ void getOnPlatform () {
 			StopDrive();
 			// wait1Msec(200);
 			// TurnR(127, 314);
-			// StopDrive();		
+			// StopDrive();
 		}
 }
 
 void ThreeFlags () {
     if (red) {
     	// First turn on flywheel
-    	// startTask(turnFlywheelOn);	
+    	// startTask(turnFlywheelOn);
       // Next start intake
     	getSecondBall();
     	// startTask(turnFlywheelOn);
@@ -441,16 +441,16 @@ void ThreeFlags () {
       // Turn off flywheel and drive straight to toggle low flag
       DriveF(100, 100); // MAY NEED TO CHANGE THE TIME VALUE
       StopDrive();
-      
+
       // Now flip over opponent's cap
       autoCapFlipper();
     }
     else {
       // First turn on flywheel
-    	// startTask(turnFlywheelOn);	
+    	// startTask(turnFlywheelOn);
       // Next start intake
-    
-    
+
+
     	getSecondBall();
     	// startTask(turnFlywheelOn);
     	wait1Msec(200);
@@ -470,7 +470,7 @@ void ThreeFlags () {
       // Turn off flywheel and drive straight to toggle low flag
       DriveF(100, 100); // MAY NEED TO CHANGE THE TIME VALUE
       StopDrive();
-      
+
       // Now flip over opponent's cap
       autoCapFlipper();
     }
@@ -604,8 +604,8 @@ task usercontrol () {
     if (vexRT[Btn8L]) {
       autoShoot(1);
     }
-    
-    
+
+
 
     // For testing auto cap flipper (after shooting top 2 flags)
     if (vexRT[Btn8R]) {
