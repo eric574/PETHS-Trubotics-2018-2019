@@ -166,11 +166,11 @@ void TurnL (int amount, int time) {
 }
 
 void Turn90L () {
-  TurnL(127, 320);
+  TurnL(127, 314);
 }
 
 void Turn90R () {
-  TurnR(127, 320);
+  TurnR(127, 314);
 }
 
 // For taking ball in
@@ -221,10 +221,11 @@ void autoShoot (bool turnon) {
 	StopDrive();
   // 2nd ball is much lower (right under the indexer)
   startTask(Indexer1);
-  wait1Msec(3000); // MAY NEED TO CHANGE THE TIME VALUE
+  wait1Msec(1500); // MAY NEED TO CHANGE THE TIME VALUE
   stopTask(Indexer1);
   StopBallIndexer();
   stopTask(turnFlywheelOn);
+  StopShoot();
 }
 
 // For securing center and low flag points
@@ -287,7 +288,7 @@ void autoNoFlags (bool red) {
       startTask(BallIntake2);
       DriveF(100, 500);
       stopTask(BallIntake2);
-
+			StopBallIntake();
       // Now drive back and turn 90 degrees CCW
       DriveB(100, 400);
       StopDrive();
@@ -317,7 +318,7 @@ void autoNoFlags (bool red) {
       startTask(BallIntake2);
       DriveF(100, 500);
       stopTask(BallIntake2);
-
+			StopBallIntake();
       // Now drive back and turn 90 degrees CW
       DriveB(100, 400);
       StopDrive();
@@ -340,12 +341,14 @@ void autoNoFlags (bool red) {
 void autoCapFlipper () {
     if (red) {
       // Drive back and turn 90 degrees CW
-      DriveB(100, 400); // MAY NEED TO CHANGE THE TIME VALUE
+      DriveB(100, 900); // MAY NEED TO CHANGE THE TIME VALUE
       StopDrive();
       wait1Msec(200);
       // Turn90R();
-      TurnR(127, 314);
+      TurnR(127, 313);
       StopDrive();
+      
+      
       wait1Msec(200);
       // Flip over the cap/drive forwards simultaneously
       startTask(BallIntake2);
@@ -353,10 +356,11 @@ void autoCapFlipper () {
       DriveF(100, 1500); // MAY NEED TO CHANGE THE TIME VALUE
       StopDrive();
       stopTask(BallIntake2);
+      StopBallIntake();
     }
     else {
       // Drive back and turn 90 degrees CCW
-      DriveB(100, 400); // MAY NEED TO CHANGE THE TIME VALUE
+      DriveB(100, 900); // MAY NEED TO CHANGE THE TIME VALUE
       StopDrive();
       wait1Msec(200);
       // Turn90L();
@@ -369,6 +373,7 @@ void autoCapFlipper () {
       DriveF(100, 1500); // MAY NEED TO CHANGE THE TIME VALUE
       StopDrive();
       stopTask(BallIntake2);
+      StopBallIntake();
     }
 }
 
@@ -383,13 +388,40 @@ void getSecondBall () {
     StopBallIntake();
 }
 
+void getOnPlatform () {
+		if (red) {	
+			DriveB(100, 1000);
+			StopDrive();
+			wait1Msec(200);
+			TurnR(127, 314);
+			StopDrive();
+			wait1Msec(200);
+			DriveF(127, 2000);
+			StopDrive();
+			// wait1Msec(200);
+			// TurnL(127, 314);
+			// StopDrive();
+		}
+		else {
+			DriveB(100, 1000);
+			StopDrive();
+			wait1Msec(200);
+			TurnL(127, 314);
+			StopDrive();
+			wait1Msec(200);
+			DriveF(127, 2000);
+			StopDrive();
+			// wait1Msec(200);
+			// TurnR(127, 314);
+			// StopDrive();		
+		}
+}
+
 void ThreeFlags () {
     if (red) {
     	// First turn on flywheel
     	// startTask(turnFlywheelOn);	
       // Next start intake
-    
-    
     	getSecondBall();
     	// startTask(turnFlywheelOn);
     	wait1Msec(200);
@@ -452,6 +484,7 @@ task autonomous () {
   if (flags) {
     // TwoFlags();
     ThreeFlags();
+    getOnPlatform();
   }
   else {
     autoNoFlags(red);
@@ -574,7 +607,7 @@ task usercontrol () {
     
     
 
-    // For turning 90 degrees CW
+    // For testing auto cap flipper (after shooting top 2 flags)
     if (vexRT[Btn8R]) {
       // Turn90R();
     	autoCapFlipper();
