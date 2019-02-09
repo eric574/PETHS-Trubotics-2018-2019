@@ -3,7 +3,7 @@
 #pragma config(Motor,  port3,           DriveLeft2,    tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port4,           DriveRight1,   tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port5,           DriveRight2,   tmotorVex393_MC29, openLoop, reversed)
-#pragma config(Motor,  port6,           Intake,        tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port6,           Intake,        tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port7,           Indexer,       tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port8,           Flywheel1,     tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port9,           Flywheel2,     tmotorVex393_MC29, openLoop)
@@ -208,7 +208,7 @@ task turnFlywheelOn () {
 void autoShoot (bool turnon) {
   if (turnon) {
   	startTask(turnFlywheelOn);
-  	wait1Msec(3000); // MAY NEED TO CHANGE THE TIME VALUE
+  	wait1Msec(1500); // MAY NEED TO CHANGE THE TIME VALUE
   }
   // Shoot 1st ball
   startTask(Indexer1);
@@ -216,12 +216,12 @@ void autoShoot (bool turnon) {
   stopTask(Indexer1);
   StopBallIndexer();
   // MAY NEED TO CHANGE THE TIME VALUE
-  if (turnon) DriveF(100, 1500); // Now prepare to hit middle flag
+  if (turnon) DriveF(100, 1300); // Now prepare to hit middle flag
   else DriveF(100, 1500);
 	StopDrive();
   // 2nd ball is much lower (right under the indexer)
   startTask(Indexer1);
-  wait1Msec(1500); // MAY NEED TO CHANGE THE TIME VALUE
+  wait1Msec(1600); // MAY NEED TO CHANGE THE TIME VALUE
   stopTask(Indexer1);
   StopBallIndexer();
   stopTask(turnFlywheelOn);
@@ -364,7 +364,7 @@ void autoCapFlipper () {
       StopDrive();
       wait1Msec(200);
       // Turn90L();
-      TurnL(127, 314);
+      TurnL(127, 313);
       StopDrive();
       wait1Msec(200);
       // Flip over the cap/drive forwards simultaneously
@@ -381,35 +381,35 @@ void autoCapFlipper () {
 void getSecondBall () {
 		startTask(BallIntake1);
 		// Drive up to get the ball underneath the cap first
-		DriveF(100, 1500); // MAY NEED TO CHANGE THE TIME VALUE
+		DriveF(100, 1400); // MAY NEED TO CHANGE THE TIME VALUE
     StopDrive();
-    wait1Msec(500);
+    // wait1Msec(500);
     stopTask(BallIntake1);
     StopBallIntake();
 }
 
 void getOnPlatform () {
 		if (red) {
-			DriveB(100, 1000);
+			DriveB(100, 500);
 			StopDrive();
 			wait1Msec(200);
-			TurnR(127, 314);
+			TurnL(127, 313);
 			StopDrive();
 			wait1Msec(200);
-			DriveF(127, 2000);
+			DriveB(127, 2900);
 			StopDrive();
 			// wait1Msec(200);
 			// TurnL(127, 314);
 			// StopDrive();
 		}
 		else {
-			DriveB(100, 1000);
+			DriveB(100, 500);
 			StopDrive();
 			wait1Msec(200);
-			TurnL(127, 314);
+			TurnR(127, 314);
 			StopDrive();
 			wait1Msec(200);
-			DriveF(127, 2000);
+			DriveB(127, 2500);
 			StopDrive();
 			// wait1Msec(200);
 			// TurnR(127, 314);
@@ -430,7 +430,7 @@ void ThreeFlags () {
       StopDrive();
       wait1Msec(200);
       // Turn90L();
-      TurnL(127, 314);
+      TurnL(127, 313);
       StopDrive();
       // wait1Msec(200);
       /* Can alternatively use autoShoot() instead of code below */
@@ -439,7 +439,7 @@ void ThreeFlags () {
 			StopShoot();
 			wait1Msec(200);
       // Turn off flywheel and drive straight to toggle low flag
-      DriveF(100, 100); // MAY NEED TO CHANGE THE TIME VALUE
+      DriveF(100, 500); // MAY NEED TO CHANGE THE TIME VALUE
       StopDrive();
 
       // Now flip over opponent's cap
@@ -517,35 +517,40 @@ task usercontrol () {
     int tmp = 0;
     double backDev = 1;
     if (vexRT[Ch2] > 20) {
-      tmp = min(vexRT[Ch2], 127);
+      tmp = min(vexRT[Ch2], 95);
       // backDev = 1;
     }
     else if (vexRT[Ch2] < -20) {
-      tmp = max(vexRT[Ch2], -127);
+      tmp = max(vexRT[Ch2], -95);
       // backDev = 0.978;
     }
+
+
     motor[DriveLeft1] = tmp * con*backDev;
     motor[DriveRight1] = 0.95*tmp * con*backDev;
     motor[DriveRight2] = 0.95*tmp * con*backDev;
     motor[DriveLeft2] = tmp * con*backDev;
 
+    int turnMax = 95
+    ;
     // Left axle turn
     if (vexRT[Btn5U]) {
-      motor[DriveLeft1] = vexRT[Btn5U] * 90 * con;
-      motor[DriveRight1] = vexRT[Btn5U] * -90 * con;
-      motor[DriveRight2] = vexRT[Btn5U] * -90 * con;
-      motor[DriveLeft2] = vexRT[Btn5U] * 90 * con;
+    	int tmp  =
+      motor[DriveLeft1] = turnMax * 90 * con;
+      motor[DriveRight1] = turnMax * -90 * con;
+      motor[DriveRight2] = turnMax * -90 * con;
+      motor[DriveLeft2] = turnMax * 90 * con;
     }
     // Right axle turn
     else if (vexRT[Btn6U]) {
-      motor[DriveLeft1] = vexRT[Btn6U] * 90 * -con;
-      motor[DriveRight1] = vexRT[Btn6U] * -90 * -con;
-      motor[DriveRight2] = vexRT[Btn6U] * -90 * -con;
-      motor[DriveLeft2] = vexRT[Btn6U] * 90 * -con;
+      motor[DriveLeft1] = turnMax * 90 * -con;
+      motor[DriveRight1] = turnMax * -90 * -con;
+      motor[DriveRight2] = turnMax * -90 * -con;
+      motor[DriveLeft2] = turnMax * 90 * -con;
     }
 
     // Turn left sensitive
-    if (vexRT[Btn7L]) {
+    if (vexRT[Ch4] > 0) {
       motor[DriveLeft1] = 50 * con;
       motor[DriveRight1] = 0;
       motor[DriveRight2] = 0;
@@ -553,7 +558,7 @@ task usercontrol () {
     }
 
     // Turn right sensitive
-    else if (vexRT[Btn7R]) {
+    else if (vexRT[Ch4] < 0) {
       motor[DriveLeft1] = 0;
       motor[DriveRight1] = -50 * -con;
       motor[DriveRight2] = -50 * -con;
